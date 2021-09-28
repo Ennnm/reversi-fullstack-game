@@ -6,18 +6,11 @@ export default function gameModel(sequelize, DataTypes) {
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    current_turn: {
+    currentTurn: {
       type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
-    black_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id',
-      },
-    },
-    white_id: {
+    blackId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -25,7 +18,15 @@ export default function gameModel(sequelize, DataTypes) {
         key: 'id',
       },
     },
-    winner_id: {
+    whiteId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    winnerId: {
       type: DataTypes.INTEGER,
       references: {
         model: 'users',
@@ -35,10 +36,12 @@ export default function gameModel(sequelize, DataTypes) {
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   }, { underscored: true });
 }

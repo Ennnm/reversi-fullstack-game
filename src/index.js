@@ -121,8 +121,130 @@ import './styles.scss';
 // createGameBtn.innerText = 'Start Game';
 
 // checkLoggedIn();
+const headerContainer = document.querySelector('#header-container');
+const gameContainer = document.querySelector('#game-container');
+const infoContainer = document.querySelector('#info-container');
+const actionContainer = document.querySelector('#action-container');
+const modalContainer = document.querySelector('#modal');
+// game data
+let isBlackTurn = true;
+let gameId;
+let turnNum;
+let opponentId;
+const boardSize = 8;
+
+const clickOnCell = (e) => {
+  const cell = e.target;
+  const cellId = cell.id;
+  // check if token exists in cell
+  if (cell.innerHTML !== '') {
+    return;
+  }
+  const [colIndex, rowIndex] = cellId.split('_').slice(1).map((x) => parseInt(x, 10));
+
+  console.log('colIndex, rowIndex :>> ', colIndex, rowIndex);
+  // send
+  axios.put(`/game/${gameId}/${turnNum}/move`, { isBlackTurn, colIndex, rowIndex })
+    .then((response) => {
+      // response return success , invalid move, whose turn next, turn num
+      // isBlackTurn = !isBlackTurn;
+      console.log('response.data :>> ', response.data);
+      turnNum = response.data.turnNum;
+      isBlackTurn = response.data.isBlackTurn;
+      const { gameState } = response.data;
+    }).catch((err) => console.log('error in initGame:>> ', err));
+  // render
+
+  // locally store gameId and game_turn
+  // from gameId get latest game_turn
+  // get gameState's board Data
+
+  // evaluate if valid move.
+  // make copy of existing board
+  // if valid check token's impact of existing board. flip seeds
+  // check number of valid moves for opposing player
+  // if number == 0, current player continues to move
+  // update board if white, create new board if white and black cannot move, else create a new board for the next 'turn'
+  // return board for render
+
+  // check if move is valid
+  // if valid add token
+  const seed = isBlackTurn
+    ? '<div class="seed" onclick="event.cancelBubble=true;"></div>'
+    : '<div class="seed white" onclick="event.cancelBubble=true;"></div>';
+  console.log('cell.innerHTML :>> ', cell.innerHTML);
+  cell.innerHTML += seed;
+  console.log('cell :>> ', cell);
+};
+const initBoardElem = () => {
+  const table = document.createElement('table');
+  for (let i = 0; i < boardSize; i += 1) {
+    const boardRow = table.insertRow();
+    boardRow.id = `row_${i}`;
+    for (let j = 0; j < boardSize; j += 1) {
+      const boardCell = boardRow.insertCell();
+      // follow convention A1... where A is column, 1 is row
+      boardCell.id = `square_${j}_${i}`;
+      boardCell.addEventListener('click', clickOnCell);
+    }
+  }
+  return table;
+};
+
+const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
+  infoContainer.innerText = `Black: ${numBlackSeeds}  White: ${numWhiteSeeds}`;
+};
+
+const addToCell = (isBlackSeed, rowIndex, colIndex) => {
+  const cell = document.querySelector(`#square_${colIndex}_${rowIndex}`);
+  // true is black seed, false is white seed, null is no seed
+  const seed = isBlackSeed ? '<div class="seed" onclick="event.cancelBubble=true;"></div>'
+    : '<div class="seed white" onclick="event.cancelBubble=true;"></div>';
+  cell.innerHTML += seed;
+};
+const renderBoard = (boardData) => {
+  // initialise empty board, re-renders board
+  gameContainer.innerHTML = '';
+  gameContainer.appendChild(initBoardElem());
+  console.log('boardData :>> ', boardData);
+  // run through board data, fill board
+  for (let i = 0; i < boardData.length; i += 1)
+  {
+    const refRow = boardData[i];
+    for (let j = 0; j < refRow.length; j += 1) {
+      const refCell = refRow[j];
+      if (refCell !== null) {
+        addToCell(refCell, i, j);
+      }
+    }
+  }
+};
+const renderGame = (gameState) => {
+  const { boardData, numBlackSeeds, numWhiteSeeds } = gameState;
+  console.log('boardData :>> ', boardData);
+  renderBoard(boardData);
+  renderScoreInfo(numBlackSeeds, numWhiteSeeds);
+};
+
+const initGame = (gameType, opponentId = 0) => {
+  // booleanArray true: black, false: white, undefined/null: empty
+  axios.post('/games', { gameType, opponentId })
+    .then((response) => {
+      const turnData = response.data.initTurn;
+      console.log('response from game init :>> ', response.data);
+
+      const { gameState } = turnData;
+      gameId = turnData.gameId;
+      turnNum = turnData.turnNum;
+      console.log('gameId :>> ', gameId);
+      console.log('turnNum :>> ', turnNum);
+      console.log('gameState :>> ', gameState);
+      renderGame(gameState);
+    }).catch((e) => console.log('error in initGame:>> ', e));
+};
 
 const startPage = () => {
+  headerContainer.innerText = 'RiverSea';
   // fill header
   // render board
   // login signup btn
@@ -185,3 +307,22 @@ const findMatchModal = () => {
   // show user details ( username, wins, losses, rank?)
   // find another, play btn
 };
+const multiplayerLocalGame = () => {
+  console.log('in multiplayer local');
+  // gameContainer.appendChild(initBoardElem());
+  initGame('local');
+
+  // black player
+  // white player
+};
+const multiplayerOnlineGame = () => {
+  // connection by sockets?
+};
+const users = () => {
+  // show online and offline players
+  // rank, status
+};
+const map = () => {
+  // plan attack
+};
+multiplayerLocalGame();

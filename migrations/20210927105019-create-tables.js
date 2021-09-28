@@ -17,7 +17,7 @@ module.exports = {
       },
       password: {
         allowNull: false,
-        type: Sequelize.STRING(64),
+        type: Sequelize.STRING,
       },
       created_at: {
         allowNull: false,
@@ -50,8 +50,8 @@ module.exports = {
         },
       },
       white_id: {
+        // null indicates playing with computer
         type: Sequelize.INTEGER,
-        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
@@ -75,7 +75,7 @@ module.exports = {
       },
     });
 
-    await queryInterface.createTable('game_turn', {
+    await queryInterface.createTable('turns', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -136,7 +136,7 @@ module.exports = {
       },
     });
     await queryInterface.createTable('user_status', {
-      id: {
+      userId: {
         type: Sequelize.INTEGER,
         references: {
           model: 'users',
@@ -164,7 +164,7 @@ module.exports = {
     await queryInterface.dropTable('tips');
     await queryInterface.dropTable('game_turn');
     await queryInterface.dropTable('game_users');
-    await queryInterface.dropTable('users');
     await queryInterface.dropTable('games');
+    await queryInterface.dropTable('users');
   },
 };

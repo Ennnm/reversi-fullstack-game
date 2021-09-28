@@ -1,6 +1,6 @@
 export default function userStatusModel(sequelize, DataTypes) {
-  return sequelize.define('status', {
-    id: {
+  return sequelize.define('user_status', {
+    userId: {
       type: DataTypes.INTEGER,
       references: {
         model: 'user',
@@ -16,10 +16,12 @@ export default function userStatusModel(sequelize, DataTypes) {
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
   }, { underscored: true });
 }

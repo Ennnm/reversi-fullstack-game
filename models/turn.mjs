@@ -1,5 +1,5 @@
-export default function gameTurnModel(sequelize, DataTypes) {
-  return sequelize.define('gameTurn', {
+export default function turnModel(sequelize, DataTypes) {
+  return sequelize.define('turn', {
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -17,6 +17,7 @@ export default function gameTurnModel(sequelize, DataTypes) {
     turnNum: {
       allowNull: false,
       type: DataTypes.INTEGER,
+      defaultValue: 0,
     },
     blackMove: {
       type: DataTypes.CHAR(2),

@@ -1,4 +1,4 @@
-export default function gameModel(sequelize, DataTypes) {
+export default function userModel(sequelize, DataTypes) {
   return sequelize.define('user', {
     id: {
       allowNull: false,
@@ -27,10 +27,13 @@ export default function gameModel(sequelize, DataTypes) {
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
     },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+
     },
   }, { underscored: true });
 }

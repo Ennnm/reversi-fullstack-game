@@ -1,3 +1,39 @@
+$cell-dimensions: 5em;
+$token-dimensions: 4em;
+
 body {
-  background-color: pink;
+  background-color: #d7f2fa;
 }
+td {
+  width: $cell-dimensions;
+  height: $cell-dimensions;
+  background-color: #2e8b57;
+  border: solid 0.2em #2b2b2b;
+}
+.seed {
+  width: $token-dimensions;
+  height: $token-dimensions;
+  border-radius: 50%;
+  border: 2px solid black;
+  background-color: black;
+  box-shadow: 3px 5px 3px -3px black;
+  margin: auto auto;
+}
+
+.white {
+  background-color: white;
+}
+
+// @mixin seed($bg) {
+//   width: $token-dimensions;
+//   height: $token-dimensions;
+//   border-radius: 50%;
+//   background-color: $bg;
+// }
+
+// .seed-white {
+//   @include seed(white);
+// }
+// .seed-black {
+//   @include seed(black);
+// }
