@@ -15,10 +15,14 @@ export default function tipModel(sequelize, DataTypes) {
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+
     },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+
     },
   }, { underscored: true });
 }

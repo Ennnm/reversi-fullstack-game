@@ -190,6 +190,20 @@ const initBoardElem = () => {
   }
   return table;
 };
+const initSeedGrid = () => {
+  const table = document.createElement('table');
+  for (let i = 0; i < boardSize; i += 1) {
+    const boardRow = table.insertRow();
+    boardRow.id = `row_${i}`;
+    for (let j = 0; j < boardSize; j += 1) {
+      const boardCell = boardRow.insertCell();
+      // follow convention A1... where A is column, 1 is row
+      boardCell.id = `square_${j}_${i}`;
+      boardCell.addEventListener('click', clickOnCell);
+    }
+  }
+  return table;
+};
 
 const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
   infoContainer.innerText = `Black: ${numBlackSeeds}  White: ${numWhiteSeeds}`;
