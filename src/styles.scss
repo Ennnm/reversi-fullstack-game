@@ -7,8 +7,28 @@ body {
 td {
   width: $cell-dimensions;
   height: $cell-dimensions;
-  background-color: #2e8b57;
   border: solid 0.2em #2b2b2b;
+}
+table {
+  z-index: 0;
+  position: relative;
+}
+.relative {
+  position: relative;
+}
+.board-colors {
+  background-color: #2e8b57;
+
+  border: solid 0.2em #2b2b2b;
+}
+@mixin overlay-above {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.click-grid {
+  @include overlay-above();
+  z-index: 1;
 }
 .seed {
   width: $token-dimensions;

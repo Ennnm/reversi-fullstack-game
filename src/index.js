@@ -126,84 +126,14 @@ const gameContainer = document.querySelector('#game-container');
 const infoContainer = document.querySelector('#info-container');
 const actionContainer = document.querySelector('#action-container');
 const modalContainer = document.querySelector('#modal');
+
+gameContainer.classList.add('relative');
 // game data
 let isBlackTurn = true;
 let gameId;
 let turnNum;
 let opponentId;
 const boardSize = 8;
-
-const clickOnCell = (e) => {
-  const cell = e.target;
-  const cellId = cell.id;
-  // check if token exists in cell
-  if (cell.innerHTML !== '') {
-    return;
-  }
-  const [colIndex, rowIndex] = cellId.split('_').slice(1).map((x) => parseInt(x, 10));
-
-  console.log('colIndex, rowIndex :>> ', colIndex, rowIndex);
-  // send
-  axios.put(`/game/${gameId}/${turnNum}/move`, { isBlackTurn, colIndex, rowIndex })
-    .then((response) => {
-      // response return success , invalid move, whose turn next, turn num
-      // isBlackTurn = !isBlackTurn;
-      console.log('response.data :>> ', response.data);
-      turnNum = response.data.turnNum;
-      isBlackTurn = response.data.isBlackTurn;
-      const { gameState } = response.data;
-    }).catch((err) => console.log('error in initGame:>> ', err));
-  // render
-
-  // locally store gameId and game_turn
-  // from gameId get latest game_turn
-  // get gameState's board Data
-
-  // evaluate if valid move.
-  // make copy of existing board
-  // if valid check token's impact of existing board. flip seeds
-  // check number of valid moves for opposing player
-  // if number == 0, current player continues to move
-  // update board if white, create new board if white and black cannot move, else create a new board for the next 'turn'
-  // return board for render
-
-  // check if move is valid
-  // if valid add token
-  const seed = isBlackTurn
-    ? '<div class="seed" onclick="event.cancelBubble=true;"></div>'
-    : '<div class="seed white" onclick="event.cancelBubble=true;"></div>';
-  console.log('cell.innerHTML :>> ', cell.innerHTML);
-  cell.innerHTML += seed;
-  console.log('cell :>> ', cell);
-};
-const initBoardElem = () => {
-  const table = document.createElement('table');
-  for (let i = 0; i < boardSize; i += 1) {
-    const boardRow = table.insertRow();
-    boardRow.id = `row_${i}`;
-    for (let j = 0; j < boardSize; j += 1) {
-      const boardCell = boardRow.insertCell();
-      // follow convention A1... where A is column, 1 is row
-      boardCell.id = `square_${j}_${i}`;
-      boardCell.addEventListener('click', clickOnCell);
-    }
-  }
-  return table;
-};
-const initSeedGrid = () => {
-  const table = document.createElement('table');
-  for (let i = 0; i < boardSize; i += 1) {
-    const boardRow = table.insertRow();
-    boardRow.id = `row_${i}`;
-    for (let j = 0; j < boardSize; j += 1) {
-      const boardCell = boardRow.insertCell();
-      // follow convention A1... where A is column, 1 is row
-      boardCell.id = `square_${j}_${i}`;
-      boardCell.addEventListener('click', clickOnCell);
-    }
-  }
-  return table;
-};
 
 const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
   infoContainer.innerText = `Black: ${numBlackSeeds}  White: ${numWhiteSeeds}`;
@@ -216,9 +146,31 @@ const addToCell = (isBlackSeed, rowIndex, colIndex) => {
     : '<div class="seed white" onclick="event.cancelBubble=true;"></div>';
   cell.innerHTML += seed;
 };
+const initBoardElem = () => {
+  const table = document.createElement('table');
+  table.id = 'boardGrid';
+  for (let i = 0; i < boardSize; i += 1) {
+    const boardRow = table.insertRow();
+    boardRow.id = `row_${i}`;
+    for (let j = 0; j < boardSize; j += 1) {
+      const boardCell = boardRow.insertCell();
+      boardCell.classList.add('board-colors');
+      // follow convention A1... where A is column, 1 is row
+      boardCell.id = `square_${j}_${i}`;
+    }
+  }
+  return table;
+};
+
+const removeBoardElem = () => {
+  const existingBoardElem = document.querySelector('#boardGrid');
+  if (existingBoardElem !== null) {
+    gameContainer.removeChild(existingBoardElem);
+  }
+};
 const renderBoard = (boardData) => {
-  // initialise empty board, re-renders board
-  gameContainer.innerHTML = '';
+  // re-renders board
+  removeBoardElem();
   gameContainer.appendChild(initBoardElem());
   console.log('boardData :>> ', boardData);
   // run through board data, fill board
@@ -240,6 +192,61 @@ const renderGame = (gameState) => {
   renderScoreInfo(numBlackSeeds, numWhiteSeeds);
 };
 
+const clickOnCell = (e) => {
+  const cell = e.target;
+  const cellId = cell.id;
+  // check if token exists in cell
+  const [colIndex, rowIndex] = cellId.split('_').slice(1).map((x) => parseInt(x, 10));
+
+  const seedCell = document.querySelector(`#square_${colIndex}_${rowIndex}`);
+
+  if (seedCell.innerHTML !== '') {
+    return;
+  }
+  // send
+  axios.put(`/game/${gameId}/${turnNum}/move`, { isBlackTurn, colIndex, rowIndex })
+    .then((response) => {
+      // response return success , invalid move, whose turn next, turn num
+      // isBlackTurn = !isBlackTurn;
+      console.log('response.data in clickonCell:>> ', response.data);
+      turnNum = response.data.turnNum;
+      isBlackTurn = response.data.isBlackTurn;
+      const { gameState } = response.data;
+      renderGame(gameState);
+    }).catch((err) => console.log('error in clickOnCell:>> ', err));
+  // render
+
+  // locally store gameId and game_turn
+  // from gameId get latest game_turn
+  // get gameState's board Data
+
+  // evaluate if valid move.
+  // make copy of existing board
+  // if valid check token's impact of existing board. flip seeds
+  // check number of valid moves for opposing player
+  // if number == 0, current player continues to move
+  // update board if white, create new board if white and black cannot move, else create a new board for the next 'turn'
+  // return board for render
+
+  // check if move is valid
+  // if valid add token
+};
+
+const initClickGrid = () => {
+  const table = document.createElement('table');
+  table.classList.add('click-grid');
+  for (let i = 0; i < boardSize; i += 1) {
+    const boardRow = table.insertRow();
+    for (let j = 0; j < boardSize; j += 1) {
+      const boardCell = boardRow.insertCell();
+      // follow convention A1... where A is column, 1 is row
+      boardCell.id = `click_${j}_${i}`;
+      boardCell.addEventListener('click', clickOnCell);
+    }
+  }
+  return table;
+};
+
 const initGame = (gameType, opponentId = 0) => {
   // booleanArray true: black, false: white, undefined/null: empty
   axios.post('/games', { gameType, opponentId })
@@ -250,10 +257,8 @@ const initGame = (gameType, opponentId = 0) => {
       const { gameState } = turnData;
       gameId = turnData.gameId;
       turnNum = turnData.turnNum;
-      console.log('gameId :>> ', gameId);
-      console.log('turnNum :>> ', turnNum);
-      console.log('gameState :>> ', gameState);
       renderGame(gameState);
+      gameContainer.appendChild(initClickGrid());
     }).catch((e) => console.log('error in initGame:>> ', e));
 };
 
