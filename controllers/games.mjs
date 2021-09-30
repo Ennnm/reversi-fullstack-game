@@ -5,6 +5,32 @@ import * as gameLogic from '../src/game-logic.mjs';
 
 const { Op } = pkg;
 
+const getCurrTurn = async (db, gameId, turnNum) => {
+  let currGameTurn = await db.Turn.findOne({
+    where: {
+      gameId,
+      turnNum,
+    },
+  });
+  if (currGameTurn === null) {
+    const prevGameTurn = await db.Turn.findOne({
+      where: {
+        gameId,
+        turnNum: turnNum - 1,
+      },
+    });
+    currGameTurn = await db.Turn.create({
+      gameId,
+      turnNum,
+      gameState: {
+        boardData: prevGameTurn.gameState.boardData,
+        validMoves: prevGameTurn.gameState.validMoves,
+      },
+    });
+  }
+  return currGameTurn;
+};
+
 export default function initGamesController(db) {
   // render the main page
   const index = (request, response) => {
@@ -16,25 +42,32 @@ export default function initGamesController(db) {
     const { gameType } = request.body;
 
     userId = 1;
-    console.log('userIds :>> ', userId);
+    // console.log('userIds :>> ', userId);
 
     const boardData = gameLogic.startingBoard();
+    const validMoves = gameLogic.getValidMoves(boardData, true);
     const gameState = {
       boardData,
       numBlackSeeds: 2,
       numWhiteSeeds: 2,
       gameIsConcluded: false,
+
+      validMoves,
     };
     console.log('in game creation');
+
     let opponentId;
-    if (gameType === 'local') {
-      opponentId = userId;
+    switch (gameType) {
+      case 'local':
+        opponentId = userId;
+        break;
+      case 'computer':
+        opponentId = null;
+        break;
+      default:
+        opponentId = request.body.opponent.id;
     }
-    else if (gameType === 'computer')
-    {
-      opponentId = null;
-    }
-    else { opponentId = request.body.opponent.id; }
+
     try {
       const newGame = await db.Game.create({
         blackId: userId,
@@ -43,17 +76,16 @@ export default function initGamesController(db) {
       const initTurn = await db.Turn.create({
         gameId: newGame.id,
         gameState,
-      });
-      console.log('gameState :>> ', gameState);
-      const emptySpaceArdOpponent = gameLogic.findEmptyArndOpponent(boardData, true);
 
-      response.status(200).send({ initTurn, emptySpaceArdOpponent });
+      });
+      response.status(200).send({ initTurn, validMoves });
     } catch (error) {
       console.log('error in creating game');
       checkError(error);
       response.status(500).send(error);
     }
   };
+
   const show = async (req, res) => {
     const { gameId } = req.params;
     try {
@@ -83,46 +115,28 @@ export default function initGamesController(db) {
       res.status(500).send(error);
     }
   };
-  const validMoves = async (req, res) => {
-
-  };
+  // const getCurrentTurn = async (gameId, )
   const createMove = async (req, res) => {
     // eslint-disable-next-line prefer-const
-    let { colIndex, rowIndex, isBlackTurn } = req.body;
+    let { rowIndex, colIndex, isBlackTurn } = req.body;
     // eslint-disable-next-line prefer-const
     let { gameId, turnNum } = req.params;
     turnNum = parseInt(turnNum, 10);
-    // validation check -> right move?
-    const isValid = true;
-    console.log('in createMove');
-    if (!isValid) {
-      res.send({ isValid });
-    }
-    try {
-      const colChar = String.fromCharCode(65 + colIndex);
-      const moveCode = `${colChar}${rowIndex + 1}`;
+    const moveCode = `${String.fromCharCode(65 + colIndex)}${rowIndex + 1}`;
 
-      let currGameTurn = await db.Turn.findOne({
-        where: {
-          gameId,
-          turnNum,
-        },
-      });
-      if (currGameTurn === null) {
-        const prevGameTurn = await db.Turn.findOne({
-          where: {
-            gameId,
-            turnNum: turnNum - 1,
-          },
-        });
-        currGameTurn = await db.Turn.create({
-          gameId,
-          turnNum,
-          gameState: { boardData: prevGameTurn.gameState.boardData },
-        });
-      }
+    console.log('in createMove');
+    try {
+      const currGameTurn = await getCurrTurn(db, gameId, turnNum);
+
       const { gameState } = currGameTurn;
       const { boardData } = gameState;
+      const currentValidMoves = gameState.validMoves;
+      const validMove = gameLogic.moveIsValid(rowIndex, colIndex, currentValidMoves);
+      if (validMove === false) {
+        res.send({ isValidMove: validMove });
+        return;
+      }
+      gameLogic.flipSeeds(boardData, validMove);
       if (isBlackTurn) {
         // update flipped seeds in array
         currGameTurn.blackMove = moveCode;
@@ -134,18 +148,17 @@ export default function initGamesController(db) {
         turnNum += 1;
       }
       boardData[rowIndex][colIndex] = isBlackTurn;
-      currGameTurn.gameState = { boardData };
-      await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
-      await currGameTurn.reload();
 
       // if opponent has valid moves
       isBlackTurn = !isBlackTurn;
-      console.log('currGameTurn :>> ', currGameTurn);
-      console.log('currGameTurn.gameState :>> ', currGameTurn.gameState.boardData);
-      const emptySpaceArdOpponent = gameLogic.findEmptyArndOpponent(boardData, isBlackTurn);
+      const validMoves = gameLogic.getValidMoves(boardData, isBlackTurn);
+
+      currGameTurn.gameState = { boardData, validMoves };
+      await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
+      await currGameTurn.reload();
 
       res.send({
-        turnNum, isBlackTurn, gameState, emptySpaceArdOpponent,
+        turnNum, isBlackTurn, gameState, validMoves,
       });
     } catch (e) {
       console.log('error in updating turn');
@@ -183,7 +196,6 @@ export default function initGamesController(db) {
     index,
     show,
     showTurn,
-    validMoves,
     createMove,
     setWinner,
   };

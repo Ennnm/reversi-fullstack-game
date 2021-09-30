@@ -244,11 +244,19 @@ const clickOnCell = (e) => {
       // response return success , invalid move, whose turn next, turn num
       // isBlackTurn = !isBlackTurn;
       console.log('response.data in clickonCell:>> ', response.data);
+      if (response.data.isValidMove === false)
+      {
+        return;
+      }
       turnNum = response.data.turnNum;
       isBlackTurn = response.data.isBlackTurn;
-      const { gameState, emptySpaceArdOpponent } = response.data;
+      const { gameState, validMoves } = response.data;
+      console.log('validMoves in clickOnCell :>> ', validMoves);
       renderGameState(gameState);
-      renderMoveGrid(emptySpaceArdOpponent);
+      // renderMoveGrid(emptySpaceArdOpponent);
+      const coordValidMoves = validMoves.map((move) => move.coord);
+      console.log('coordValidMoves in clickonCell :>> ', coordValidMoves);
+      renderMoveGrid(coordValidMoves);
     }).catch((err) => console.log('error in clickOnCell:>> ', err));
   // render
 
@@ -288,14 +296,14 @@ const initGame = (gameType, opponentId = 0) => {
   axios.post('/games', { gameType, opponentId })
     .then((response) => {
       const turnData = response.data.initTurn;
-      const { emptySpaceArdOpponent } = response.data;
-      console.log('response from game init :>> ', response.data);
-
+      const { validMoves } = response.data;
+      // validMoves is a list of objects container coord, direction with coord
+      const coordValidMoves = validMoves.map((move) => move.coord);
       const { gameState } = turnData;
       gameId = turnData.gameId;
       turnNum = turnData.turnNum;
       renderGameState(gameState);
-      renderMoveGrid(emptySpaceArdOpponent);
+      renderMoveGrid(coordValidMoves);
 
       gameContainer.appendChild(initClickGrid());
     }).catch((e) => console.log('error in initGame:>> ', e));

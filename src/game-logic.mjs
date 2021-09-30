@@ -28,23 +28,17 @@ const getCoordInDirection = (i, j, direction, distance = 1) => {
   if (displacedI < 0 || displacedI >= boardSize || displacedJ < 0 || displacedJ >= boardSize) {
     return null;
   }
-  console.log('[displacedI, displacedJ] :>> ', [displacedI, displacedJ]);
   return [displacedI, displacedJ];
 };
-// const getCell = (i, j, boardData) => {
-//   return boardData[i][j];
-// }
 export const findEmptyArndOpponent = (boardData, isBlackTurn) => {
-  console.log('boardData, isBlackTurn :>> ', boardData, isBlackTurn);
   const emptyCoord = [];
   const opponent = !isBlackTurn;
-  const directions = Object.keys(directionCoord).map((key) => directionCoord[key]);
+  const directions = Object.values(directionCoord);
 
   for (let i = 0; i < boardData.length; i += 1) {
     const refRow = boardData[i];
     for (let j = 0; j < refRow.length; j += 1) {
       const refCell = refRow[j];
-      console.log('refCell :>> ', refCell);
       if (refCell === opponent) {
         // check if adjacent is blank
         directions.forEach((dir) => {
@@ -60,5 +54,97 @@ export const findEmptyArndOpponent = (boardData, isBlackTurn) => {
       }
     }
   }
+  // make into a set of empty spaces
   return emptyCoord;
 };
+const findPlayerTokenInDir = (i, j, boardData, isBlackTurn, direction) => {
+  let distance = 2;
+  while (distance < 8)
+  {
+    const cellCoord = getCoordInDirection(i, j, direction, distance);
+    if (cellCoord === null)
+    {
+      return null;
+    }
+    const [displacedI, displacedJ] = cellCoord;
+    const refCell = boardData[displacedI][displacedJ];
+    if (refCell === isBlackTurn) {
+      return cellCoord;
+    }
+    distance += 1;
+  }
+  return null;
+};
+export const findValidMovesFromEmpty = (boardData, isBlackTurn, emptySpaces) => {
+  const validMoves = [];
+  const opponent = !isBlackTurn;
+  const directions = Object.entries(directionCoord);
+  // from empty space, evaluate direction of adjacent seeds, create moves-direction obj
+  for (let k = 0; k < emptySpaces.length; k += 1) {
+    const moveObj = {
+      coord: emptySpaces[k],
+    };
+    const [i, j] = emptySpaces[k];
+    // eslint-disable-next-line no-restricted-syntax
+    for (const [key, coord] of directions)
+    {
+      const adjacentIndices = getCoordInDirection(i, j, coord);
+      if (adjacentIndices !== null) {
+        const adjCell = boardData[adjacentIndices[0]][adjacentIndices[1]];
+        if (adjCell === opponent) {
+          const foundTokenCoord = findPlayerTokenInDir(i, j, boardData, isBlackTurn, coord);
+          if (foundTokenCoord !== null)
+          {
+            moveObj[key] = foundTokenCoord;
+          }
+        }
+      }
+    }
+    if (Object.keys(moveObj).length > 1) {
+      validMoves.push(moveObj);
+    }
+  }
+  return validMoves;
+};
+export const getValidMoves = (boardData, isBlackTurn) => {
+  const emptySpaceArdOpponent = findEmptyArndOpponent(boardData, isBlackTurn);
+  return findValidMovesFromEmpty(boardData, isBlackTurn, emptySpaceArdOpponent);
+};
+
+export const moveIsValid = (rowI, colI, validMoves) => {
+  const coord = validMoves.map((x) => x.coord);
+
+  for (let i = 0; i < coord.length; i += 1) {
+    const move = coord[i];
+    if (rowI === move[0] && colI === move[1]) return validMoves[i];
+  }
+  return false;
+};
+
+const addCoord = (c1, c2) => [c1[0] + c2[0], c1[1] + c2[1]];
+
+const coordsAreEqual = (c1, c2) => c1[0] === c2[0] && c1[1] === c2[1];
+
+const flipSeedInDirection = (boardData, startCoord, endCoord, direction) => {
+  let nextCoord = addCoord(startCoord, direction);
+  while (!coordsAreEqual(nextCoord, endCoord))
+  {
+    boardData[nextCoord[0]][nextCoord[1]] = !boardData[nextCoord[0]][nextCoord[1]];
+    nextCoord = addCoord(nextCoord, direction);
+  }
+  // return boardData;
+};
+export const flipSeeds = (boardData, moveObj) => {
+  const { coord } = moveObj;
+  delete moveObj.coord;
+
+  const directions = Object.entries(moveObj);
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [dirType, endCoord] of directions) {
+    flipSeedInDirection(boardData, coord, endCoord, directionCoord[dirType]);
+  }
+  // return boardData with flipped seeds
+  return boardData;
+};
+
+// export const
