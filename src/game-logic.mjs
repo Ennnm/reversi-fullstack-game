@@ -68,6 +68,7 @@ const findPlayerTokenInDir = (i, j, boardData, isBlackTurn, direction) => {
     }
     const [displacedI, displacedJ] = cellCoord;
     const refCell = boardData[displacedI][displacedJ];
+    if (refCell === null) return null;
     if (refCell === isBlackTurn) {
       return cellCoord;
     }
@@ -143,8 +144,25 @@ export const flipSeeds = (boardData, moveObj) => {
   for (const [dirType, endCoord] of directions) {
     flipSeedInDirection(boardData, coord, endCoord, directionCoord[dirType]);
   }
-  // return boardData with flipped seeds
   return boardData;
 };
 
+export const countSeeds = (boardData) => {
+  let numBlackSeeds = 0;
+  let numWhiteSeeds = 0;
+  console.log('boardData :>> ', boardData);
+  for (let i = 0; i < boardData.length; i += 1) {
+    const refRow = boardData[i];
+    for (let j = 0; j < refRow.length; j += 1) {
+      const cell = refRow[j];
+      if (cell === true) {
+        numBlackSeeds += 1;
+      }
+      if (cell === false) {
+        numWhiteSeeds += 1;
+      }
+    }
+  }
+  return [numBlackSeeds, numWhiteSeeds];
+};
 // export const

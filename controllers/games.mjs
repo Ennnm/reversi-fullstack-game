@@ -4,6 +4,11 @@ import { checkError } from '../src/util.mjs';
 import * as gameLogic from '../src/game-logic.mjs';
 
 const { Op } = pkg;
+const gameStates = {
+  black: 'Black\'s turn',
+  white: 'White\'s turn',
+  end: 'Game has ended',
+};
 
 const getCurrTurn = async (db, gameId, turnNum) => {
   let currGameTurn = await db.Turn.findOne({
@@ -19,12 +24,16 @@ const getCurrTurn = async (db, gameId, turnNum) => {
         turnNum: turnNum - 1,
       },
     });
+    console.log('gameId, turnNum :>> ', gameId, turnNum);
+    console.log('prevGameTurn :>> ', prevGameTurn);
     currGameTurn = await db.Turn.create({
       gameId,
       turnNum,
       gameState: {
-        boardData: prevGameTurn.gameState.boardData,
-        validMoves: prevGameTurn.gameState.validMoves,
+        ...prevGameTurn.gameState,
+        // boardData: prevGameTurn.gameState.boardData,
+        // validMoves: prevGameTurn.gameState.validMoves,
+        // gameStates:
       },
     });
   }
@@ -50,7 +59,7 @@ export default function initGamesController(db) {
       boardData,
       numBlackSeeds: 2,
       numWhiteSeeds: 2,
-      gameIsConcluded: false,
+      gameStatus: gameStates.black,
 
       validMoves,
     };
@@ -129,36 +138,54 @@ export default function initGamesController(db) {
       const currGameTurn = await getCurrTurn(db, gameId, turnNum);
 
       const { gameState } = currGameTurn;
-      const { boardData } = gameState;
+      let { boardData } = gameState;
       const currentValidMoves = gameState.validMoves;
       const validMove = gameLogic.moveIsValid(rowIndex, colIndex, currentValidMoves);
       if (validMove === false) {
         res.send({ isValidMove: validMove });
         return;
       }
-      gameLogic.flipSeeds(boardData, validMove);
+
       if (isBlackTurn) {
         // update flipped seeds in array
         currGameTurn.blackMove = moveCode;
-      // check if white as any moves to make, if not increment turn
+        // check if white as any moves to make, if not increment turn
       }
       else {
       // reference enough, or need to reassign to gameState?
         currGameTurn.whiteMove = moveCode;
         turnNum += 1;
       }
+      boardData = gameLogic.flipSeeds(boardData, validMove);
       boardData[rowIndex][colIndex] = isBlackTurn;
+      const [numBlackSeeds, numWhiteSeeds] = gameLogic.countSeeds(boardData);
 
       // if opponent has valid moves
-      isBlackTurn = !isBlackTurn;
-      const validMoves = gameLogic.getValidMoves(boardData, isBlackTurn);
+      // isBlackTurn = !isBlackTurn;
+      // valid moves of opponent
+      let validMoves = gameLogic.getValidMoves(boardData, !isBlackTurn);
+      let gameStatus;
+      if (validMoves.length === 0) {
+        turnNum += 1;
+        validMoves = gameLogic.getValidMoves(boardData, isBlackTurn);
+        if (validMoves.length === 0) {
+          gameStatus = gameStates.end;
+        }
+      }
+      else {
+        isBlackTurn = !isBlackTurn;
+        const turnText = isBlackTurn ? 'black' : 'white';
+        gameStatus = gameStates[turnText];
+      }
 
-      currGameTurn.gameState = { boardData, validMoves };
+      currGameTurn.gameState = {
+        boardData, validMoves, numBlackSeeds, numWhiteSeeds, gameStatus,
+      };
       await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
       await currGameTurn.reload();
 
       res.send({
-        turnNum, isBlackTurn, gameState, validMoves,
+        turnNum, isBlackTurn, gameState: currGameTurn.gameState, validMoves,
       });
     } catch (e) {
       console.log('error in updating turn');

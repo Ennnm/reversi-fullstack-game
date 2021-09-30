@@ -124,6 +124,7 @@ import './styles.scss';
 const headerContainer = document.querySelector('#header-container');
 const gameContainer = document.querySelector('#game-container');
 const infoContainer = document.querySelector('#info-container');
+const statusContainer = document.querySelector('#status-container');
 const actionContainer = document.querySelector('#action-container');
 const modalContainer = document.querySelector('#modal');
 
@@ -137,6 +138,11 @@ const boardSize = 8;
 
 const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
   infoContainer.innerText = `Black: ${numBlackSeeds}  White: ${numWhiteSeeds}`;
+};
+const renderGameStatusInfo = (gameStatus) => {
+  console.log('gameStatus :>> ', gameStatus);
+  console.log('statusContainer :>> ', statusContainer);
+  statusContainer.innerText = gameStatus;
 };
 
 const addToCell = (isBlackSeed, rowIndex, colIndex) => {
@@ -221,10 +227,13 @@ const renderMoveGrid = (movesData) => {
   });
 };
 const renderGameState = (gameState) => {
-  const { boardData, numBlackSeeds, numWhiteSeeds } = gameState;
+  const {
+    boardData, numBlackSeeds, numWhiteSeeds, gameStatus,
+  } = gameState;
   console.log('boardData :>> ', boardData);
   renderBoard(boardData);
   renderScoreInfo(numBlackSeeds, numWhiteSeeds);
+  renderGameStatusInfo(gameStatus);
 };
 
 const clickOnCell = (e) => {
@@ -303,6 +312,7 @@ const initGame = (gameType, opponentId = 0) => {
       gameId = turnData.gameId;
       turnNum = turnData.turnNum;
       renderGameState(gameState);
+      console.log('coordValidMoves :>> ', coordValidMoves);
       renderMoveGrid(coordValidMoves);
 
       gameContainer.appendChild(initClickGrid());
