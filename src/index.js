@@ -130,19 +130,30 @@ const modalContainer = document.querySelector('#modal');
 
 gameContainer.classList.add('relative');
 // game data
+let playerIsBlack;
 let isBlackTurn = true;
 let gameId;
 let turnNum;
 let opponentId;
+let coordValidMoves;
 const boardSize = 8;
 
 const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
   infoContainer.innerText = `Black: ${numBlackSeeds}  White: ${numWhiteSeeds}`;
 };
-const renderGameStatusInfo = (gameStatus) => {
-  console.log('gameStatus :>> ', gameStatus);
-  console.log('statusContainer :>> ', statusContainer);
-  statusContainer.innerText = gameStatus;
+const renderGameStatusInfo = (gameStatus, numBlackSeeds, numWhiteSeeds) => {
+  if (gameStatus === 'Game has ended')
+  {
+    let endgameMesg = 'Its a tie';
+    if (numBlackSeeds > numWhiteSeeds) {
+      endgameMesg = 'Black wins!'; }
+    else if (numBlackSeeds < numWhiteSeeds) {
+      endgameMesg = 'White wins!'; }
+    statusContainer.innerText = endgameMesg;
+  }
+  else {
+    statusContainer.innerText = gameStatus;
+  }
 };
 
 const addToCell = (isBlackSeed, rowIndex, colIndex) => {
@@ -182,16 +193,6 @@ const initMovesGrid = () => {
   }
   return table;
 };
-const removeBoardElem = () => {
-  const existingBoardElem = document.querySelector('#boardGrid');
-  if (existingBoardElem !== null) {
-    gameContainer.removeChild(existingBoardElem);
-  }
-  const existingMoveElem = document.querySelector('#moveGrid');
-  if (existingMoveElem !== null) {
-    gameContainer.removeChild(existingMoveElem);
-  }
-};
 const removeElemById = (id, container) => {
   const element = document.querySelector(`#${id}`);
   if (element !== null) {
@@ -201,8 +202,6 @@ const removeElemById = (id, container) => {
 const renderBoard = (boardData) => {
   // re-renders board
   removeElemById('boardGrid', gameContainer);
-  // removeBoardElem();
-  // gameContainer.appendChild(initMovesGrid());
   gameContainer.appendChild(initBoardElem());
   console.log('boardData :>> ', boardData);
   // run through board data, fill board
@@ -217,15 +216,34 @@ const renderBoard = (boardData) => {
     }
   }
 };
-const renderMoveGrid = (movesData) => {
+const renderMoveGrid = (e) => {
+  if (e.key !== ' ') {
+    return;
+  }
   removeElemById('moveGrid', gameContainer);
   gameContainer.appendChild(initMovesGrid());
-  movesData.forEach((coord) => {
+
+  coordValidMoves.forEach((coord) => {
     const [i, j] = coord;
     const moveCell = document.querySelector(`#move_${i}_${j}`);
-    moveCell.classList.add('highlight-cell');
+    if (isBlackTurn === true)
+    {
+      moveCell.classList.add('highlight-cell-black');
+    }
+    else if (isBlackTurn === false) {
+      moveCell.classList.add('highlight-cell-white');
+    }
   });
 };
+
+document.addEventListener('keydown', renderMoveGrid);
+document.addEventListener('keyup', (e) => {
+  console.log('in removing movegrid');
+  if (e.keyCode !== 32) {
+    return;
+  }
+  removeElemById('moveGrid', gameContainer); });
+
 const renderGameState = (gameState) => {
   const {
     boardData, numBlackSeeds, numWhiteSeeds, gameStatus,
@@ -233,7 +251,7 @@ const renderGameState = (gameState) => {
   console.log('boardData :>> ', boardData);
   renderBoard(boardData);
   renderScoreInfo(numBlackSeeds, numWhiteSeeds);
-  renderGameStatusInfo(gameStatus);
+  renderGameStatusInfo(gameStatus, numBlackSeeds, numWhiteSeeds);
 };
 
 const clickOnCell = (e) => {
@@ -250,8 +268,6 @@ const clickOnCell = (e) => {
   // send
   axios.put(`/game/${gameId}/${turnNum}/move`, { isBlackTurn, colIndex, rowIndex })
     .then((response) => {
-      // response return success , invalid move, whose turn next, turn num
-      // isBlackTurn = !isBlackTurn;
       console.log('response.data in clickonCell:>> ', response.data);
       if (response.data.isValidMove === false)
       {
@@ -261,28 +277,13 @@ const clickOnCell = (e) => {
       isBlackTurn = response.data.isBlackTurn;
       const { gameState, validMoves } = response.data;
       console.log('validMoves in clickOnCell :>> ', validMoves);
+      removeElemById('moveGrid', gameContainer);
+
       renderGameState(gameState);
       // renderMoveGrid(emptySpaceArdOpponent);
-      const coordValidMoves = validMoves.map((move) => move.coord);
+      coordValidMoves = validMoves.map((move) => move.coord);
       console.log('coordValidMoves in clickonCell :>> ', coordValidMoves);
-      renderMoveGrid(coordValidMoves);
     }).catch((err) => console.log('error in clickOnCell:>> ', err));
-  // render
-
-  // locally store gameId and game_turn
-  // from gameId get latest game_turn
-  // get gameState's board Data
-
-  // evaluate if valid move.
-  // make copy of existing board
-  // if valid check token's impact of existing board. flip seeds
-  // check number of valid moves for opposing player
-  // if number == 0, current player continues to move
-  // update board if white, create new board if white and black cannot move, else create a new board for the next 'turn'
-  // return board for render
-
-  // check if move is valid
-  // if valid add token
 };
 
 const initClickGrid = () => {
@@ -295,6 +296,7 @@ const initClickGrid = () => {
       // follow convention A1... where A is column, 1 is row
       boardCell.id = `click_${i}_${j}`;
       boardCell.addEventListener('click', clickOnCell);
+      boardCell.addEventListener('click', clickOnCell);
     }
   }
   return table;
@@ -302,18 +304,19 @@ const initClickGrid = () => {
 
 const initGame = (gameType, opponentId = 0) => {
   // booleanArray true: black, false: white, undefined/null: empty
-  axios.post('/games', { gameType, opponentId })
+  // initiator is black
+  playerIsBlack = true;
+  axios.post('/games', { gameType, opponentId, playerIsBlack })
     .then((response) => {
       const turnData = response.data.initTurn;
       const { validMoves } = response.data;
       // validMoves is a list of objects container coord, direction with coord
-      const coordValidMoves = validMoves.map((move) => move.coord);
+      coordValidMoves = validMoves.map((move) => move.coord);
       const { gameState } = turnData;
       gameId = turnData.gameId;
       turnNum = turnData.turnNum;
       renderGameState(gameState);
       console.log('coordValidMoves :>> ', coordValidMoves);
-      renderMoveGrid(coordValidMoves);
 
       gameContainer.appendChild(initClickGrid());
     }).catch((e) => console.log('error in initGame:>> ', e));
@@ -321,6 +324,15 @@ const initGame = (gameType, opponentId = 0) => {
 
 const startPage = () => {
   headerContainer.innerText = 'RiverSea';
+  initGame('local');
+  const loginBtn = document.createElement('button');
+  const signUpBtn = document.createElement('button');
+
+  loginBtn.innerText = 'Login';
+  signUpBtn.innerText = 'Signup';
+
+  actionContainer.appendChild(loginBtn);
+  actionContainer.appendChild(signUpBtn);
   // fill header
   // render board
   // login signup btn
@@ -401,4 +413,5 @@ const users = () => {
 const map = () => {
   // plan attack
 };
-multiplayerLocalGame();
+startPage();
+// multiplayerLocalGame();

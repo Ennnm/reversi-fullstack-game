@@ -1,17 +1,32 @@
-$cell-dimensions: 5em;
-$token-dimensions: 4em;
+$cell-dimensions: 2em;
+$token-dimensions: 1.6em;
+$border-thickness: 2px;
+$highlight-opacity: 0.8;
+$header-font-size: 3.5em;
+
+$breakpoints: (
+  phone: 640px,
+  tablet: 768px,
+  desktop: 1024px,
+) !default;
 
 body {
   background-color: #d7f2fa;
+  font-family: "Recursive", sans-serif;
 }
 td {
   width: $cell-dimensions;
   height: $cell-dimensions;
-  border: solid 0.2em #2b2b2b;
+  border: solid $border-thickness #2b2b2b;
 }
+
 table {
   z-index: 0;
   position: relative;
+}
+#header-container {
+  font-family: "Recursive", sans-serif;
+  font-size: $header-font-size;
 }
 .relative {
   position: relative;
@@ -19,10 +34,21 @@ table {
 .board-colors {
   background-color: #2e8b57;
 
-  border: solid 0.2em #2b2b2b;
+  border: solid $border-thickness #2b2b2b;
 }
 .highlight-cell {
   background-color: aqua;
+  opacity: $highlight-opacity;
+}
+.highlight-cell-black {
+  // background-color: #8c2920;
+  background-color: #6c3c8c;
+  opacity: $highlight-opacity;
+}
+.highlight-cell-white {
+  // background-color: #413c8c;
+  background-color: #8c6520;
+  opacity: $highlight-opacity;
 }
 @mixin overlay-above {
   position: absolute;
@@ -50,17 +76,17 @@ table {
 .white {
   background-color: white;
 }
-
-// @mixin seed($bg) {
-//   width: $token-dimensions;
-//   height: $token-dimensions;
-//   border-radius: 50%;
-//   background-color: $bg;
-// }
-
-// .seed-white {
-//   @include seed(white);
-// }
-// .seed-black {
-//   @include seed(black);
-// }
+@media (min-width: 767px) {
+  td {
+    width: $cell-dimensions * 2.5;
+    height: $cell-dimensions * 2.5;
+    border: solid $border-thickness * 2 #2b2b2b;
+  }
+  .seed {
+    width: $token-dimensions * 2.5;
+    height: $token-dimensions * 2.5;
+  }
+  #header-container {
+    font-size: $header-font-size * 2.5;
+  }
+}

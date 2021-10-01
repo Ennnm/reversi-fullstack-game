@@ -31,9 +31,6 @@ const getCurrTurn = async (db, gameId, turnNum) => {
       turnNum,
       gameState: {
         ...prevGameTurn.gameState,
-        // boardData: prevGameTurn.gameState.boardData,
-        // validMoves: prevGameTurn.gameState.validMoves,
-        // gameStates:
       },
     });
   }
@@ -48,7 +45,7 @@ export default function initGamesController(db) {
   // create a new game. Insert a new row in the DB.
   const create = async (request, response) => {
     let { userId } = request.cookies;
-    const { gameType } = request.body;
+    const { gameType, playerIsBlack } = request.body;
 
     userId = 1;
     // console.log('userIds :>> ', userId);
@@ -74,13 +71,17 @@ export default function initGamesController(db) {
         opponentId = null;
         break;
       default:
-        opponentId = request.body.opponent.id;
+        opponentId = request.body.opponentId;
     }
+    const blackId = playerIsBlack ? userId : opponentId;
+    const whiteId = playerIsBlack ? opponentId : userId;
 
     try {
       const newGame = await db.Game.create({
-        blackId: userId,
-        whiteId: opponentId,
+        // blackId: userId,
+        // whiteId: opponentId,
+        blackId,
+        whiteId,
       });
       const initTurn = await db.Turn.create({
         gameId: newGame.id,
