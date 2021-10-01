@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Modal } from 'bootstrap';
 import './styles.scss';
 
 // Make a request for all the items
@@ -321,27 +322,86 @@ const initGame = (gameType, opponentId = 0) => {
       gameContainer.appendChild(initClickGrid());
     }).catch((e) => console.log('error in initGame:>> ', e));
 };
+const submitSignUpForm = () => {
+  console.log('hey in signup');
+  const otterName = document.querySelector('#otter-name').value;
+  const email = document.querySelector('#email').value;
+  const password = document.querySelector('#password').value;
+  // const errorContainer = document.querySelector('#error-container');
 
-const startPage = () => {
-  headerContainer.innerText = 'RiverSea';
-  initGame('local');
-  const loginBtn = document.createElement('button');
-  const signUpBtn = document.createElement('button');
-
-  loginBtn.innerText = 'Login';
-  signUpBtn.innerText = 'Signup';
-
-  actionContainer.appendChild(loginBtn);
-  actionContainer.appendChild(signUpBtn);
-  // fill header
-  // render board
-  // login signup btn
+  axios.post('/login', { otterName, email, password })
+    .then((response) => {
+      if (response.data.error)
+      {
+        throw response.data.error;
+      }
+      // const formContainer = document.querySelector('#form-container');
+      // formContainer.innerHTML = '';
+      // errorContainer.innerHTML = '';
+    })
+    .catch((error) => {
+      // errorContainer.innerHTML = '<p style="color:red">Wrong email or password</p>';
+      console.log(error);
+    });
 };
+const submitLoginForm = () => {
+  console.log('hey');
+  const otterName = document.querySelector('#otter-name').value;
+  const email = document.querySelector('#email').value;
+  const password = document.querySelector('#password').value;
+  // const errorContainer = document.querySelector('#error-container');
 
+  axios.post('/login', { otterName, email, password })
+    .then((response) => {
+      if (response.data.error)
+      {
+        throw response.data.error;
+      }
+      // const formContainer = document.querySelector('#form-container');
+      // formContainer.innerHTML = '';
+      // errorContainer.innerHTML = '';
+    })
+    .catch((error) => {
+      // errorContainer.innerHTML = '<p style="color:red">Wrong email or password</p>';
+      console.log(error);
+    });
+};
 const loginModal = () => {
   // error msg (display: 'none')
   // username
   // password
+
+  const loginHTML = `<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginModalLabel">Log In</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="mb-3">
+            <label for="email" class="col-form-label">Email:</label>
+            <input type="email" class="form-control" id="email">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="col-form-label">Password:</label>
+            <input type="password" class="form-control" id="password">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+        <button type="button" id="innerLoginBtn" class="btn btn-info">Log In</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+  modalContainer.innerHTML = loginHTML;
+  const innerLoginBtn = document.getElementById('innerLoginBtn');
+
+  innerLoginBtn.addEventListener('click', submitLoginForm);
 };
 
 const signUpModal = () => {
@@ -349,6 +409,90 @@ const signUpModal = () => {
   // username
   // email
   // password
+  const signupHTML = `<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginModalLabel">Sign Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="mb-3">
+            <label for="ottername" class="col-form-label">Ottername:</label>
+            <input type="text" class="form-control" id="ottername">
+          </div>
+          <div class="mb-3">
+            <label for="email" class="col-form-label">Email:</label>
+            <input type="email" class="form-control" id="email">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="col-form-label">Password:</label>
+            <input type="password" class="form-control" id="password">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+        <button type="button" id="innerSignUpBtn" class="btn btn-info">Log In</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+  modalContainer.innerHTML = signupHTML;
+  const innerLoginBtn = document.getElementById('innerSignUpBtn');
+
+  innerLoginBtn.addEventListener('click', submitSignUpForm);
+};
+
+const startPage = () => {
+  headerContainer.innerText = 'RiverSea';
+  initGame('local');
+
+  // const loginBtn = '<button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#signupModal" data-bs-whatever="@mdo">Sign Up</button>';
+  // const signupBtnHTML = `
+  // <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-whatever="@fat">Sign up</button>`;
+
+  // actionContainer.innerHTML += signupBtnHTML;
+  modalContainer.innerHTML = '';
+  const loginBtn = document.createElement('button');
+  loginBtn.classList.add('btn', 'btn-info');
+  loginBtn.innerText = 'Login';
+
+  const signupBtn = document.createElement('button');
+  signupBtn.classList.add('btn', 'btn-light');
+  signupBtn.innerText = 'Sign up';
+
+  actionContainer.appendChild(signupBtn);
+
+  actionContainer.appendChild(loginBtn);
+
+  loginBtn.addEventListener('click', () => {
+    loginModal();
+
+    const loginM = new Modal(document.getElementById('loginModal'));
+    loginM.toggle();
+  });
+
+  signupBtn.addEventListener('click', () => {
+    signUpModal();
+
+    const signupM = new Modal(document.getElementById('signupModal'));
+    signupM.toggle();
+  });
+
+  // const signUpBtn = document.createElement('button');
+
+  // loginBtn.modal('toggle')
+  // loginBtn.innerText = 'Login';
+  // signUpBtn.innerText = 'Signup';
+
+  // actionContainer.appendChild(loginBtn);
+  // actionContainer.appendChild(signUpBtn);
+  // fill header
+  // render board
+  // login signup btn
 };
 
 const mainPage = () => {
@@ -414,4 +558,5 @@ const map = () => {
   // plan attack
 };
 startPage();
+// loginModal();
 // multiplayerLocalGame();
