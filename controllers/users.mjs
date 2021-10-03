@@ -11,8 +11,8 @@ export default function initUserController(db) {
     loginToken.updatedAt = currentDate;
     await loginToken.save();
   };
-  const register = async (req, res) => {
-    const { email, password } = req.body;
+  const create = async (req, res) => {
+    const { username, email, password } = req.body;
     try {
       const findEmail = await db.User.findOne(
         { where: { email } },
@@ -25,6 +25,7 @@ export default function initUserController(db) {
       else {
         const userSqx = await db.User.create(
           {
+            username,
             email,
             password: getHash(password),
           },
@@ -109,7 +110,7 @@ export default function initUserController(db) {
     res.send({ id: matchUser.id, isOfflineMatch });
   };
   return {
-    register,
+    create,
     login,
     findMatch,
   };

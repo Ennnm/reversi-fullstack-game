@@ -2,132 +2,13 @@ import axios from 'axios';
 import { Modal } from 'bootstrap';
 import './styles.scss';
 
-// Make a request for all the items
-// put axios function, run function according to userflow diagram
-
-// axios.get('/items')
-//   .then((response) => {
-//     // handle success
-//     console.log(response.data.items);
-
-//     const itemCont = document.createElement('div');
-
-//     response.data.items.forEach((item) => {
-//       const itemEl = document.createElement('div');
-//       itemEl.innerText = JSON.stringify(item);
-//       itemEl.classList.add('item');
-//       document.body.appendChild(itemEl);
-//     });
-
-//     document.body.appendChild(itemCont);
-//   })
-//   .catch((error) => {
-//     // handle error
-//     console.log(error);
-//   });
-
-// const checkLoggedIn = () => {
-//   axios.get('/isloggedin')
-//     .then((response) => {
-//       console.log('response from login :>> ', response);
-//       if (response.data.isLoggedIn === true)
-//       {
-//         document.body.appendChild(createGameBtn);
-//       }
-//       else {
-//         // render other buttons
-//         document.body.appendChild(loginBtn);
-//         document.body.appendChild(registrationBtn);
-//       }
-//     })
-//     .catch((error) => console.log('error from logging in', error));
-// };
-// // manipulate DOM, set up create game button
-// const regisLoginForm = function (buttonName) {
-//   const formContainer = document.querySelector('#form-container');
-
-//   formContainer.innerHTML = `<input placeholder="email" id="email">
-//   <input placeholder="password" id="password">
-//   <button id=${buttonName}>${buttonName}</button>`;
-// };
-
-// const submitRegisForm = async () => {
-//   const email = document.querySelector('#email').value;
-//   const password = document.querySelector('#password').value;
-//   const errorContainer = document.querySelector('#error-container');
-
-//   await axios.post('/register', { email, password })
-//     .then((response) => {
-//       if (response.data.error)
-//       {
-//         throw response.data.error;
-//       }
-//       const formContainer = document.querySelector('#form-container');
-//       formContainer.innerHTML = '';
-//       errorContainer.innerHTML = '';
-//     })
-//     .catch((error) => {
-//       errorContainer.innerHTML = '<p style="color:red">Email is not valid</p>';
-//       console.log(error);
-//     });
-//   checkLoggedIn();
-// };
-// const submitLoginForm = async () => {
-//   const email = document.querySelector('#email').value;
-//   const password = document.querySelector('#password').value;
-//   const errorContainer = document.querySelector('#error-container');
-
-//   await axios.post('/login', { email, password })
-//     .then((response) => {
-//       if (response.data.error)
-//       {
-//         throw response.data.error;
-//       }
-//       const formContainer = document.querySelector('#form-container');
-//       formContainer.innerHTML = '';
-//       errorContainer.innerHTML = '';
-//     })
-//     .catch((error) => {
-//       errorContainer.innerHTML = '<p style="color:red">Wrong email or password</p>';
-//       console.log(error);
-//     });
-//   checkLoggedIn();
-// };
-
-// const regisForm = () => {
-//   const formType = 'Register';
-//   regisLoginForm(formType);
-//   const submitButton = document.querySelector(`button[id=${formType}]`);
-//   submitButton.addEventListener('click', submitRegisForm);
-//   document.body.removeChild(loginBtn);
-//   document.body.removeChild(registrationBtn);
-// };
-
-// const loginForm = () => {
-//   const formType = 'Login';
-//   regisLoginForm(formType);
-//   const submitButton = document.querySelector(`button[id=${formType}]`);
-//   submitButton.addEventListener('click', submitLoginForm);
-//   document.body.removeChild(loginBtn);
-//   document.body.removeChild(registrationBtn);
-// };
-
-// registrationBtn.addEventListener('click', regisForm);
-// registrationBtn.innerText = 'Register';
-
-// loginBtn.addEventListener('click', loginForm);
-// loginBtn.innerText = 'Login';
-
-// createGameBtn.addEventListener('click', createGame);
-// createGameBtn.innerText = 'Start Game';
-
 // checkLoggedIn();
 const headerContainer = document.querySelector('#header-container');
 const gameContainer = document.querySelector('#game-container');
 const infoContainer = document.querySelector('#info-container');
 const statusContainer = document.querySelector('#status-container');
 const actionContainer = document.querySelector('#action-container');
-const modalContainer = document.querySelector('#modal');
+const modalContainer = document.querySelector('#modal-container');
 
 gameContainer.classList.add('relative');
 // game data
@@ -239,7 +120,6 @@ const renderMoveGrid = (e) => {
 
 document.addEventListener('keydown', renderMoveGrid);
 document.addEventListener('keyup', (e) => {
-  console.log('in removing movegrid');
   if (e.keyCode !== 32) {
     return;
   }
@@ -317,60 +197,146 @@ const initGame = (gameType, opponentId = 0) => {
       gameId = turnData.gameId;
       turnNum = turnData.turnNum;
       renderGameState(gameState);
-      console.log('coordValidMoves :>> ', coordValidMoves);
 
       gameContainer.appendChild(initClickGrid());
     }).catch((e) => console.log('error in initGame:>> ', e));
 };
+const removeModal = () => {
+  document.body.classList.remove('modal-open');
+  const allBackdropElem = document.querySelectorAll('.modal-backdrop');
+  allBackdropElem.forEach((elem) => {
+    const parent = elem.parentNode;
+    parent.removeChild(elem);
+  });
+  modalContainer.innerHTML = '';
+};
+
+const comOptionsModal = () => {
+  // easy, medium, hard (1,2,3)
+  // show moves toggle
+  // save btn (update user_option table)
+  // play btn (start computer vs player game)
+
+  const optionsHTML = `<div class="modal fade" id="optionsModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="optionsModalLabel">Options</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="mb-3">
+              <label for="difficultyRange" class="form-label">Difficulty: </label>
+              <div class = "d-flex justify-content-between">
+                <div>Easy</div>
+                <div>Medium</div>
+                <div>Hard</div>
+              </div>
+              <input type="range" class="form-range" min="0" max="2" step="1" id="difficultyRange">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="startBtn" class="btn btn-info">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  modalContainer.innerHTML = optionsHTML;
+  const innerStartBtn = document.getElementById('startBtn');
+  // figure out why play against computer modal doesn't turn up
+
+  // innerStartBtn.addEventListener('click', submitSignUpForm);
+};
+
+const mainPage = () => {
+  // fill header
+  // render tip board/reversi puzzle (level? random warm up board? board of the great)
+  // against ai, local multiplayer, find match btn
+  actionContainer.innerHTML = '';
+
+  const playAgstComBtn = document.createElement('button');
+  playAgstComBtn.classList.add('btn', 'btn-light');
+  playAgstComBtn.innerText = 'Play against computer';
+
+  playAgstComBtn.addEventListener('click', () => {
+    comOptionsModal();
+
+    const optionM = new Modal(document.getElementById('optionsModal'));
+    optionM.toggle();
+  });
+
+  const findMatchBtn = document.createElement('button');
+  findMatchBtn.classList.add('btn', 'btn-info');
+  findMatchBtn.innerText = 'Fight otters';
+
+  actionContainer.appendChild(playAgstComBtn);
+  // -> lead to page with all users where player can pick their opponent
+  actionContainer.appendChild(findMatchBtn);
+};
+
 const submitSignUpForm = () => {
   console.log('hey in signup');
-  const otterName = document.querySelector('#otter-name').value;
+  const username = document.querySelector('#ottername').value;
   const email = document.querySelector('#email').value;
   const password = document.querySelector('#password').value;
-  // const errorContainer = document.querySelector('#error-container');
+  const errorContainer = document.querySelector('#error-msg');
 
-  axios.post('/login', { otterName, email, password })
+  if (email === '' || password === '' || username === '') {
+    errorContainer.innerHTML = 'Please fill in all the fields';
+
+    errorContainer.classList.remove('d-none');
+    return;
+  }
+
+  axios.post('/signup', { username, email, password })
     .then((response) => {
       if (response.data.error)
       {
         throw response.data.error;
       }
-      // const formContainer = document.querySelector('#form-container');
-      // formContainer.innerHTML = '';
-      // errorContainer.innerHTML = '';
+    }).then(() => {
+      removeModal();
+      mainPage();
     })
     .catch((error) => {
-      // errorContainer.innerHTML = '<p style="color:red">Wrong email or password</p>';
+      errorContainer.innerText = 'Email already in use';
+      errorContainer.classList.remove('d-none');
       console.log(error);
     });
 };
 const submitLoginForm = () => {
   console.log('hey');
-  const otterName = document.querySelector('#otter-name').value;
-  const email = document.querySelector('#email').value;
-  const password = document.querySelector('#password').value;
-  // const errorContainer = document.querySelector('#error-container');
+  const email = document.querySelector('#login-email').value;
+  const password = document.querySelector('#login-password').value;
+  const errorContainer = document.querySelector('#error-msg-login');
 
-  axios.post('/login', { otterName, email, password })
+  if (email === '' || password === '') {
+    errorContainer.innerHTML = 'Please fill in all the fields';
+    errorContainer.classList.remove('d-none');
+    return;
+  }
+
+  axios.post('/login', { email, password })
     .then((response) => {
       if (response.data.error)
       {
         throw response.data.error;
       }
-      // const formContainer = document.querySelector('#form-container');
-      // formContainer.innerHTML = '';
-      // errorContainer.innerHTML = '';
+    }).then(() => {
+      removeModal();
+      mainPage();
     })
     .catch((error) => {
-      // errorContainer.innerHTML = '<p style="color:red">Wrong email or password</p>';
+      errorContainer.innerHTML = 'Wrong email or password';
+      errorContainer.classList.remove('d-none');
       console.log(error);
     });
 };
 const loginModal = () => {
-  // error msg (display: 'none')
-  // username
-  // password
-
   const loginHTML = `<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -379,14 +345,16 @@ const loginModal = () => {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+       <div id="error-msg-login" class="alert alert-danger d-none" role="alert">
+        </div>
         <div>
           <div class="mb-3">
-            <label for="email" class="col-form-label">Email:</label>
-            <input type="email" class="form-control" id="email">
+            <label for="login-email" class="col-form-label">Email:</label>
+            <input type="email" class="form-control" id="login-email">
           </div>
           <div class="mb-3">
-            <label for="password" class="col-form-label">Password:</label>
-            <input type="password" class="form-control" id="password">
+            <label for="login-password" class="col-form-label">Password:</label>
+            <input type="password" class="form-control" id="login-password">
           </div>
         </div>
       </div>
@@ -405,10 +373,6 @@ const loginModal = () => {
 };
 
 const signUpModal = () => {
-  // error msg (display:'none')
-  // username
-  // email
-  // password
   const signupHTML = `<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -417,6 +381,8 @@ const signUpModal = () => {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <div id="error-msg" class="alert alert-danger d-none" role="alert">
+        </div>
         <div>
           <div class="mb-3">
             <label for="ottername" class="col-form-label">Ottername:</label>
@@ -434,27 +400,22 @@ const signUpModal = () => {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-        <button type="button" id="innerSignUpBtn" class="btn btn-info">Log In</button>
+        <button type="button" id="innerSignUpBtn" class="btn btn-info">Sign up</button>
       </div>
     </div>
   </div>
 </div>`;
 
   modalContainer.innerHTML = signupHTML;
-  const innerLoginBtn = document.getElementById('innerSignUpBtn');
+  const innerSignUpBtn = document.getElementById('innerSignUpBtn');
 
-  innerLoginBtn.addEventListener('click', submitSignUpForm);
+  innerSignUpBtn.addEventListener('click', submitSignUpForm);
 };
 
 const startPage = () => {
   headerContainer.innerText = 'RiverSea';
   initGame('local');
 
-  // const loginBtn = '<button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#signupModal" data-bs-whatever="@mdo">Sign Up</button>';
-  // const signupBtnHTML = `
-  // <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-whatever="@fat">Sign up</button>`;
-
-  // actionContainer.innerHTML += signupBtnHTML;
   modalContainer.innerHTML = '';
   const loginBtn = document.createElement('button');
   loginBtn.classList.add('btn', 'btn-info');
@@ -481,32 +442,6 @@ const startPage = () => {
     const signupM = new Modal(document.getElementById('signupModal'));
     signupM.toggle();
   });
-
-  // const signUpBtn = document.createElement('button');
-
-  // loginBtn.modal('toggle')
-  // loginBtn.innerText = 'Login';
-  // signUpBtn.innerText = 'Signup';
-
-  // actionContainer.appendChild(loginBtn);
-  // actionContainer.appendChild(signUpBtn);
-  // fill header
-  // render board
-  // login signup btn
-};
-
-const mainPage = () => {
-  // fill header
-  // render tip board/reversi puzzle (level? random warm up board? board of the great)
-  // against ai, local multiplayer, find match btn
-
-};
-
-const comOptionsModal = () => {
-  // easy, medium, hard (1,2,3)
-  // show moves toggle
-  // save btn (update user_option table)
-  // play btn (start computer vs player game)
 };
 
 const playerComGame = () => {
