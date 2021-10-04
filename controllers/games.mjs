@@ -2,6 +2,7 @@ import sequelize from 'sequelize';
 import pkg from 'sequelize';
 import { checkError } from '../src/util.mjs';
 import * as gameLogic from '../src/game-logic.mjs';
+import { flip } from '@popperjs/core';
 
 const { Op } = pkg;
 const gameStates = {
@@ -132,7 +133,6 @@ export default function initGamesController(db) {
     // eslint-disable-next-line prefer-const
     let { gameId, turnNum } = req.params;
     turnNum = parseInt(turnNum, 10);
-    const moveCode = `${String.fromCharCode(65 + colIndex)}${rowIndex + 1}`;
 
     console.log('in createMove');
     try {
@@ -141,7 +141,10 @@ export default function initGamesController(db) {
       const { gameState } = currGameTurn;
       let { boardData } = gameState;
       const currentValidMoves = gameState.validMoves;
+
       const validMove = gameLogic.moveIsValid(rowIndex, colIndex, currentValidMoves);
+      const moveCode = gameLogic.moveCodeFromCoord([rowIndex, colIndex]);
+
       if (validMove === false) {
         res.send({ isValidMove: validMove });
         return;
@@ -154,11 +157,16 @@ export default function initGamesController(db) {
         currGameTurn.whiteMove = moveCode;
         turnNum += 1;
       }
-      boardData = gameLogic.flipSeeds(boardData, validMove);
-      boardData[rowIndex][colIndex] = isBlackTurn;
-      const [numBlackSeeds, numWhiteSeeds] = gameLogic.countSeeds(boardData);
+      // const validCoord = validMove.coord;
+      // const flipObj = gameLogic.flipSeeds(boardData, validMove);
+      // const  {flippedSeeds} = flipObj;
+      // boardData = flipObj.boardData;
+      // boardData[rowIndex][colIndex] = isBlackTurn;
+      // const [numBlackSeeds, numWhiteSeeds] = gameLogic.countSeeds(boardData);
+      // flippedSeeds.push(validCoord);
 
-      // if opponent has valid moves
+      const updatedGameBoard = gameLogic.updateGameBoard(boardData, validMove, isBlackTurn);
+
       let validMoves = gameLogic.getValidMoves(boardData, !isBlackTurn);
       let gameStatus;
       if (validMoves.length === 0) {
@@ -167,21 +175,41 @@ export default function initGamesController(db) {
         if (validMoves.length === 0) {
           gameStatus = gameStates.end;
         }
+        else{
+          gameStatus = gameStates[gameLogic.blackOrWhiteFromBool(isBlackTurn)];
+        }
       }
       else {
         isBlackTurn = !isBlackTurn;
-        const turnText = isBlackTurn ? 'black' : 'white';
-        gameStatus = gameStates[turnText];
+          // const turnText = isBlackTurn ? 'black' : 'white';
+          // gameStatus = gameStates[turnText];
+        gameStatus = gameStates[gameLogic.blackOrWhiteFromBool(isBlackTurn)];
+
       }
 
+      // currGameTurn.gameState = {
+      //   boardData, validMoves, numBlackSeeds, numWhiteSeeds, gameStatus
+      // };
+
       currGameTurn.gameState = {
-        boardData, validMoves, numBlackSeeds, numWhiteSeeds, gameStatus,
+        boardData: updatedGameBoard.boardData,
+        validMoves, 
+        numBlackSeeds: updatedGameBoard.numBlackSeeds, 
+        numWhiteSeeds: updatedGameBoard.numWhiteSeeds, 
+        gameStatus 
       };
       await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
       await currGameTurn.reload();
 
+      // res.send({
+      //   turnNum, isBlackTurn, gameState: currGameTurn.gameState, validMoves, flippedSeeds
+      // });
       res.send({
-        turnNum, isBlackTurn, gameState: currGameTurn.gameState, validMoves,
+        turnNum, 
+        isBlackTurn, 
+        gameState: currGameTurn.gameState, 
+        validMoves, 
+        flippedSeeds:updatedGameBoard.flippedSeeds
       });
     } catch (e) {
       console.log('error in updating turn');
@@ -203,13 +231,9 @@ export default function initGamesController(db) {
       const { gameState } = currGameTurn;
       let { boardData } = gameState;
       const currentValidMoves = gameState.validMoves;
-      // choose a move based on difficulty level
-      // choose move randomly
-      const randomIndex = Math.floor(Math.random() * currentValidMoves.length);
-      const validMove = currentValidMoves[randomIndex];
-      const [rowIndex, colIndex] = validMove.coord;
 
-      const moveCode = `${String.fromCharCode(65 + colIndex)}${rowIndex + 1}`;
+      const validMove = gameLogic.comChooseNextMove(currentValidMoves, difficultyLvl)
+      const moveCode = gameLogic.moveCodeFromCoord(validMove.coord);
 
       if (isBlackTurn) {
         currGameTurn.blackMove = moveCode;
@@ -217,11 +241,10 @@ export default function initGamesController(db) {
       else {
         currGameTurn.whiteMove = moveCode;
         turnNum += 1;
-      }
-      boardData = gameLogic.flipSeeds(boardData, validMove);
-      boardData[rowIndex][colIndex] = isBlackTurn;
-      const [numBlackSeeds, numWhiteSeeds] = gameLogic.countSeeds(boardData);
+      }   
 
+      const updatedGameBoard = gameLogic.updateGameBoard(boardData, validMove, isBlackTurn);
+      
       // if opponent has valid moves
       let validMoves = gameLogic.getValidMoves(boardData, !isBlackTurn);
       let gameStatus;
@@ -233,22 +256,31 @@ export default function initGamesController(db) {
         }
         else {
           // find computer move again
+          validMoves = gameLogic.getValidMoves(boardData, isBlackTurn);
+          gameStatus = gameStates[gameLogic.blackOrWhiteFromBool(isBlackTurn)];
         }
       }
       else {
         isBlackTurn = !isBlackTurn;
-        const turnText = isBlackTurn ? 'black' : 'white';
-        gameStatus = gameStates[turnText];
+        gameStatus = gameStates[gameLogic.blackOrWhiteFromBool(isBlackTurn)];
       }
 
       currGameTurn.gameState = {
-        boardData, validMoves, numBlackSeeds, numWhiteSeeds, gameStatus,
+        boardData: updatedGameBoard.boardData,
+        validMoves, 
+        numBlackSeeds: updatedGameBoard.numBlackSeeds, 
+        numWhiteSeeds: updatedGameBoard.numWhiteSeeds, 
+        gameStatus 
       };
       await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
       await currGameTurn.reload();
 
       res.send({
-        turnNum, isBlackTurn, gameState: currGameTurn.gameState, validMoves,
+        turnNum, 
+        isBlackTurn, 
+        gameState: currGameTurn.gameState, 
+        validMoves, 
+        flippedSeeds:updatedGameBoard.flippedSeeds
       });
     } catch (e) {
       console.log('error in updating turn');

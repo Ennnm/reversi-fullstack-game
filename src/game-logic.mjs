@@ -18,10 +18,6 @@ export const startingBoard = () => {
   boardData[4][3] = true;
   return boardData;
 };
-
-export function checkError(error) {
-
-}
 const getCoordInDirection = (i, j, direction, distance = 1) => {
   const displacedI = i + direction[0] * distance;
   const displacedJ = j + direction[1] * distance;
@@ -127,24 +123,33 @@ const addCoord = (c1, c2) => [c1[0] + c2[0], c1[1] + c2[1]];
 const coordsAreEqual = (c1, c2) => c1[0] === c2[0] && c1[1] === c2[1];
 
 const flipSeedInDirection = (boardData, startCoord, endCoord, direction) => {
+  const flippedSeeds = []
   let nextCoord = addCoord(startCoord, direction);
   while (!coordsAreEqual(nextCoord, endCoord))
   {
+    console.log('nextCoord :>> ', nextCoord);
+    flippedSeeds.push(nextCoord)
     boardData[nextCoord[0]][nextCoord[1]] = !boardData[nextCoord[0]][nextCoord[1]];
     nextCoord = addCoord(nextCoord, direction);
   }
   // return boardData;
+  return flippedSeeds
 };
 export const flipSeeds = (boardData, moveObj) => {
   const { coord } = moveObj;
   delete moveObj.coord;
 
   const directions = Object.entries(moveObj);
+  const flippedSeeds=[]
+  //figure out flipped seeds output
   // eslint-disable-next-line no-restricted-syntax
   for (const [dirType, endCoord] of directions) {
-    flipSeedInDirection(boardData, coord, endCoord, directionCoord[dirType]);
+    const newFlippedSeeds = flipSeedInDirection(boardData, coord, endCoord, directionCoord[dirType]);
+    flippedSeeds.push(...newFlippedSeeds);
   }
-  return boardData;
+  console.log('flippedSeeds in gamelogic :>> ', flippedSeeds);
+
+  return { boardData, flippedSeeds };
 };
 
 export const countSeeds = (boardData) => {
@@ -166,3 +171,30 @@ export const countSeeds = (boardData) => {
   return [numBlackSeeds, numWhiteSeeds];
 };
 // export const
+export const comChooseNextMove = (validMoves, difficultyLevel) =>{
+  let chosenMove;
+  //random
+      const randomIndex = Math.floor(Math.random() * validMoves.length);
+      chosenMove = validMoves[randomIndex];
+
+  return chosenMove;
+}
+
+export const updateGameBoard =  (boardData, moveObj, isBlackTurn ) =>{
+  const validCoord = moveObj.coord;
+  const flipObj = flipSeeds(boardData, moveObj);
+  const  {flippedSeeds} = flipObj;
+  boardData = flipObj.boardData;
+  flippedSeeds.push(validCoord)
+
+  boardData[validCoord[0]][validCoord[1]] = isBlackTurn;
+  const [numBlackSeeds, numWhiteSeeds] = countSeeds(boardData);
+  return {boardData, numBlackSeeds, numWhiteSeeds, flippedSeeds}
+}
+export const blackOrWhiteFromBool = (isBlackTurn)=>{
+  return isBlackTurn ? 'black' : 'white';
+}
+
+export const moveCodeFromCoord = (coord) => {
+  return `${String.fromCharCode(65 + coord[1])}${coord[0] + 1}`;
+}

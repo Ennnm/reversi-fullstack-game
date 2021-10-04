@@ -33,7 +33,6 @@ table {
 }
 .board-colors {
   background-color: #2e8b57;
-
   border: solid $border-thickness #2b2b2b;
 }
 .highlight-cell {
@@ -50,6 +49,11 @@ table {
   background-color: #8c6520;
   opacity: $highlight-opacity;
 }
+.highlight-new-seeds {
+  // background-color: #413c8c;
+  background-color: #ffffff;
+  opacity: 0.4;
+}
 @mixin overlay-above {
   position: absolute;
   top: 0;
@@ -58,6 +62,12 @@ table {
 .potential-moves-grid {
   @include overlay-above();
   z-index: 1;
+}
+.seed-grid {
+  @include overlay-above();
+  position: absolute;
+
+  z-index: 2;
 }
 .click-grid {
   @include overlay-above();
