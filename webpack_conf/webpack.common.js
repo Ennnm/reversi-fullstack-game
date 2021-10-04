@@ -1,10 +1,8 @@
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
-  plugins: [
-    new MiniCssExtractPlugin(),
-  ],
+  plugins: [new MiniCssExtractPlugin()],
   output: {
     filename: '[name]-[contenthash].bundle.js',
     path: path.resolve(__dirname, '../dist'),

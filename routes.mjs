@@ -11,6 +11,9 @@ export default function bindRoutes(app) {
   app.get('/', (request, response) => {
     response.sendFile(resolve('dist', 'main.html'));
   });
+  app.get('/home', (request, response) => {
+    response.sendFile(resolve('dist', 'main.html'));
+  });
   app.post('/games', gameController.create);
   app.get('/games/:gameId', gameController.show);
   app.get('/games/:gameId/:turnNum', gameController.showTurn);
