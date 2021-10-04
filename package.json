@@ -1,5 +1,5 @@
 {
-  "name": "webpack-mvc-base-swe1",
+  "name": "reversi-fullstack-game",
   "version": "1.0.0",
   "description": "",
   "main": ".eslintrc.js",
@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rocketacademy/webpack-mvc-base-swe1.git"
+    "url": "git+https://github.com/Ennnm/reversi-fullstack-game.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/rocketacademy/webpack-mvc-base-swe1/issues"
+    "url": "https://github.com/Ennnm/reversi-fullstack-game.git/issues"
   },
-  "homepage": "https://github.com/rocketacademy/webpack-mvc-base-swe1#readme",
+  "homepage": "https://github.com/Ennnm/reversi-fullstack-game.git#readme",
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
