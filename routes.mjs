@@ -16,6 +16,7 @@ export default function bindRoutes(app) {
   app.get('/games/:gameId/:turnNum', gameController.showTurn);
 
   app.put('/game/:gameId/:turnNum/move', gameController.createMove);
+  app.put('/game/:gameId/:turnNum/computermove', gameController.computerMove);
 
   app.post('/signup', userController.create);
   app.post('/login', userController.login);

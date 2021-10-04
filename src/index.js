@@ -18,6 +18,7 @@ let gameId;
 let turnNum;
 let opponentId;
 let coordValidMoves;
+let gameType;
 const boardSize = 8;
 
 const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
@@ -33,6 +34,7 @@ const renderGameStatusInfo = (gameStatus, numBlackSeeds, numWhiteSeeds) => {
       endgameMesg = 'White wins!'; }
     statusContainer.innerText = endgameMesg;
   }
+
   else {
     statusContainer.innerText = gameStatus;
   }
@@ -134,11 +136,26 @@ const renderGameState = (gameState) => {
   renderScoreInfo(numBlackSeeds, numWhiteSeeds);
   renderGameStatusInfo(gameStatus, numBlackSeeds, numWhiteSeeds);
 };
+const computerMove = () => {
+  const difficultyLvl = document.querySelector('#difficultyRange').value;
+  console.log('difficultyLvl :>> ', difficultyLvl);
 
+  axios.put(`/game/${gameId}/${turnNum}/computermove`, { isBlackTurn, difficultyLvl })
+    .then((response) => {
+      turnNum = response.data.turnNum;
+      isBlackTurn = response.data.isBlackTurn;
+      // change of turn
+      // get computer to play
+      const { gameState, validMoves } = response.data;
+      removeElemById('moveGrid', gameContainer);
+
+      renderGameState(gameState);
+      coordValidMoves = validMoves.map((move) => move.coord);
+    }).catch((err) => console.log('error in computer making a move '));
+};
 const clickOnCell = (e) => {
   const cell = e.target;
   const cellId = cell.id;
-  // check if token exists in cell
   const [rowIndex, colIndex] = cellId.split('_').slice(1).map((x) => parseInt(x, 10));
 
   const seedCell = document.querySelector(`#square_${rowIndex}_${colIndex}`);
@@ -156,14 +173,19 @@ const clickOnCell = (e) => {
       }
       turnNum = response.data.turnNum;
       isBlackTurn = response.data.isBlackTurn;
+      // change of turn
+      // get computer to play
       const { gameState, validMoves } = response.data;
-      console.log('validMoves in clickOnCell :>> ', validMoves);
       removeElemById('moveGrid', gameContainer);
 
       renderGameState(gameState);
-      // renderMoveGrid(emptySpaceArdOpponent);
       coordValidMoves = validMoves.map((move) => move.coord);
-      console.log('coordValidMoves in clickonCell :>> ', coordValidMoves);
+
+      if (gameType === 'computer') {
+        console.log('going into computer move');
+        // not possible to route axios to axios, should get computer player to make move from server side
+        computerMove();
+      }
     }).catch((err) => console.log('error in clickOnCell:>> ', err));
 };
 
@@ -177,7 +199,6 @@ const initClickGrid = () => {
       // follow convention A1... where A is column, 1 is row
       boardCell.id = `click_${i}_${j}`;
       boardCell.addEventListener('click', clickOnCell);
-      boardCell.addEventListener('click', clickOnCell);
     }
   }
   return table;
@@ -187,7 +208,9 @@ const initGame = (gameType, opponentId = 0) => {
   // booleanArray true: black, false: white, undefined/null: empty
   // initiator is black
   playerIsBlack = true;
-  axios.post('/games', { gameType, opponentId, playerIsBlack })
+  axios.post('/games', {
+    gameType, opponentId, playerIsBlack,
+  })
     .then((response) => {
       const turnData = response.data.initTurn;
       const { validMoves } = response.data;
@@ -209,6 +232,26 @@ const removeModal = () => {
     parent.removeChild(elem);
   });
   modalContainer.innerHTML = '';
+};
+
+const intiComGame = () => {
+  gameType = 'computer';
+  console.log('in p vp computer');
+
+  // in computer player, all created moves by black will receive a reaction move from com
+  // gameContainer.appendChild(initBoardElem());
+  removeModal();
+  initGame(gameType);
+  // need to await initGame  or put the different status msg in init game
+  statusContainer.innerText = 'Starting game against computer. You/Black starts first';
+  actionContainer.innerHTML = '';
+  // init game
+  // game board
+  // fill info-container (who moves)
+  // fill container (black seeds, white seeds)
+  // expandable: previous moves, changes in seed numbers -> extract most impactful move
+  // undo btn -> undo > 3 times: labelled as save scum, save boards of shame
+  // surrender btn -> end game
 };
 
 const comOptionsModal = () => {
@@ -247,9 +290,8 @@ const comOptionsModal = () => {
 
   modalContainer.innerHTML = optionsHTML;
   const innerStartBtn = document.getElementById('startBtn');
-  // figure out why play against computer modal doesn't turn up
 
-  // innerStartBtn.addEventListener('click', submitSignUpForm);
+  innerStartBtn.addEventListener('click', intiComGame);
 };
 
 const mainPage = () => {
@@ -264,7 +306,6 @@ const mainPage = () => {
 
   playAgstComBtn.addEventListener('click', () => {
     comOptionsModal();
-
     const optionM = new Modal(document.getElementById('optionsModal'));
     optionM.toggle();
   });
@@ -414,7 +455,8 @@ const signUpModal = () => {
 
 const startPage = () => {
   headerContainer.innerText = 'RiverSea';
-  initGame('local');
+  gameType = 'local';
+  initGame(gameType);
 
   modalContainer.innerHTML = '';
   const loginBtn = document.createElement('button');
@@ -442,16 +484,6 @@ const startPage = () => {
     const signupM = new Modal(document.getElementById('signupModal'));
     signupM.toggle();
   });
-};
-
-const playerComGame = () => {
-  // init game
-  // game board
-  // fill info-container (who moves)
-  // fill container (black seeds, white seeds)
-  // expandable: previous moves, changes in seed numbers -> extract most impactful move
-  // undo btn -> undo > 3 times: labelled as save scum, save boards of shame
-  // surrender btn -> end game
 };
 
 const endGame = () => {

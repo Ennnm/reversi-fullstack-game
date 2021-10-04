@@ -22,6 +22,7 @@ if (env === 'production') {
   const dbUrl = url.parse(DATABASE_URL);
   const username = dbUrl.auth.substr(0, dbUrl.auth.indexOf(':'));
   const password = dbUrl.auth.substr(dbUrl.auth.indexOf(':') + 1, dbUrl.auth.length);
+
   const dbName = dbUrl.path.slice(1);
   const host = dbUrl.hostname;
   const { port } = dbUrl;

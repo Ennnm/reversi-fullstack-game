@@ -45,7 +45,7 @@ export default function initGamesController(db) {
   // create a new game. Insert a new row in the DB.
   const create = async (request, response) => {
     let { userId } = request.cookies;
-    const { gameType, playerIsBlack } = request.body;
+    const { gameType, playerIsBlack, difficultyLvl } = request.body;
 
     userId = 1;
     // console.log('userIds :>> ', userId);
@@ -148,12 +148,9 @@ export default function initGamesController(db) {
       }
 
       if (isBlackTurn) {
-        // update flipped seeds in array
         currGameTurn.blackMove = moveCode;
-        // check if white as any moves to make, if not increment turn
       }
       else {
-      // reference enough, or need to reassign to gameState?
         currGameTurn.whiteMove = moveCode;
         turnNum += 1;
       }
@@ -162,8 +159,6 @@ export default function initGamesController(db) {
       const [numBlackSeeds, numWhiteSeeds] = gameLogic.countSeeds(boardData);
 
       // if opponent has valid moves
-      // isBlackTurn = !isBlackTurn;
-      // valid moves of opponent
       let validMoves = gameLogic.getValidMoves(boardData, !isBlackTurn);
       let gameStatus;
       if (validMoves.length === 0) {
@@ -194,6 +189,74 @@ export default function initGamesController(db) {
       res.status(500).send('failed in adding move');
     }
   };
+  const computerMove = async (req, res) => {
+    // eslint-disable-next-line prefer-const
+    let { isBlackTurn, difficultyLvl } = req.body;
+    // eslint-disable-next-line prefer-const
+    let { gameId, turnNum } = req.params;
+    turnNum = parseInt(turnNum, 10);
+
+    console.log('in computerMove');
+    try {
+      const currGameTurn = await getCurrTurn(db, gameId, turnNum);
+
+      const { gameState } = currGameTurn;
+      let { boardData } = gameState;
+      const currentValidMoves = gameState.validMoves;
+      // choose a move based on difficulty level
+      // choose move randomly
+      const randomIndex = Math.floor(Math.random() * currentValidMoves.length);
+      const validMove = currentValidMoves[randomIndex];
+      const [rowIndex, colIndex] = validMove.coord;
+
+      const moveCode = `${String.fromCharCode(65 + colIndex)}${rowIndex + 1}`;
+
+      if (isBlackTurn) {
+        currGameTurn.blackMove = moveCode;
+      }
+      else {
+        currGameTurn.whiteMove = moveCode;
+        turnNum += 1;
+      }
+      boardData = gameLogic.flipSeeds(boardData, validMove);
+      boardData[rowIndex][colIndex] = isBlackTurn;
+      const [numBlackSeeds, numWhiteSeeds] = gameLogic.countSeeds(boardData);
+
+      // if opponent has valid moves
+      let validMoves = gameLogic.getValidMoves(boardData, !isBlackTurn);
+      let gameStatus;
+      if (validMoves.length === 0) {
+        turnNum += 1;
+        validMoves = gameLogic.getValidMoves(boardData, isBlackTurn);
+        if (validMoves.length === 0) {
+          gameStatus = gameStates.end;
+        }
+        else {
+          // find computer move again
+        }
+      }
+      else {
+        isBlackTurn = !isBlackTurn;
+        const turnText = isBlackTurn ? 'black' : 'white';
+        gameStatus = gameStates[turnText];
+      }
+
+      currGameTurn.gameState = {
+        boardData, validMoves, numBlackSeeds, numWhiteSeeds, gameStatus,
+      };
+      await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
+      await currGameTurn.reload();
+
+      res.send({
+        turnNum, isBlackTurn, gameState: currGameTurn.gameState, validMoves,
+      });
+    } catch (e) {
+      console.log('error in updating turn');
+      checkError(e);
+      res.status(500).send('failed in adding move');
+    }
+  };
+
   const setWinner = async (req, res) => {
     const gameId = req.params.id;
     const { playerId, isWin } = req.body;
@@ -225,6 +288,7 @@ export default function initGamesController(db) {
     show,
     showTurn,
     createMove,
+    computerMove,
     setWinner,
   };
 }

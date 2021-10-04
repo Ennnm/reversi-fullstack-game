@@ -20,7 +20,6 @@ export default function gameModel(sequelize, DataTypes) {
     },
     whiteId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
       references: {
         model: 'users',
         key: 'id',
