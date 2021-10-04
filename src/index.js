@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createPopper } from '@popperjs/core';
+// import { createPopper } from '@popperjs/core';
 import { Modal } from 'bootstrap';
 import './styles.scss';
 
