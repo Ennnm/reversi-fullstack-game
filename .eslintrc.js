@@ -5,7 +5,7 @@ module.exports = {
     node: true,
   },
   extends: [
-    'plugin:react/recommended',
+    // 'plugin:react/recommended',
     'airbnb',
   ],
   parserOptions: {
@@ -15,9 +15,6 @@ module.exports = {
     ecmaVersion: 12,
     sourceType: 'module',
   },
-  plugins: [
-    'react',
-  ],
   rules: {
     // Don't enforce control flow closing curly brace needs to be
     // on same line as next control flow opening statement.
@@ -40,4 +37,5 @@ module.exports = {
     // Allow function param reassign for array or object elements or properties
     'no-param-reassign': ['error', { props: false }],
   },
+
 };

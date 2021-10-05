@@ -27,3 +27,9 @@ bindRoutes(app);
 // Set Express to listen on the given port
 const PORT = process.env.PORT || 3004;
 app.listen(PORT);
+
+// const io = require('socket.io')(3000);
+
+// io.on('connection', (socket) => {
+//   socket.emit('chat-message', 'hello world');
+// });

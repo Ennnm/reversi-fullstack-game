@@ -1,17 +1,21 @@
-import axios from "axios";
+import axios from 'axios';
 // import { createPopper } from '@popperjs/core';
-import { Modal } from "bootstrap";
-import "./styles.scss";
+import { Modal } from 'bootstrap';
+import './styles.scss';
 
+// const socket = io('http://localghost:3000');
+// socket.on('chat-message', (data) => {
+//   console.log(data);
+// });
 // checkLoggedIn();
-const headerContainer = document.querySelector("#header-container");
-const gameContainer = document.querySelector("#game-container");
-const infoContainer = document.querySelector("#info-container");
-const statusContainer = document.querySelector("#status-container");
-const actionContainer = document.querySelector("#action-container");
-const modalContainer = document.querySelector("#modal-container");
+const headerContainer = document.querySelector('#header-container');
+const gameContainer = document.querySelector('#game-container');
+const infoContainer = document.querySelector('#info-container');
+const statusContainer = document.querySelector('#status-container');
+const actionContainer = document.querySelector('#action-container');
+const modalContainer = document.querySelector('#modal-container');
 
-gameContainer.classList.add("relative");
+gameContainer.classList.add('relative');
 // game data
 let playerIsBlack;
 let isBlackTurn = true;
@@ -21,21 +25,49 @@ let opponentId;
 let coordValidMoves;
 let gameType;
 let difficultyLvl;
+const gameEnded = false;
 const boardSize = 8;
+const GAMEHASENDED = 'Game has ended';
 
 const renderScoreInfo = (numBlackSeeds, numWhiteSeeds) => {
   infoContainer.innerText = `Black: ${numBlackSeeds}  White: ${numWhiteSeeds}`;
 };
-const renderGameStatusInfo = (gameStatus, numBlackSeeds, numWhiteSeeds) => {
-  if (gameStatus === "Game has ended") {
-    let endgameMesg = "Its a tie";
-    if (numBlackSeeds > numWhiteSeeds) {
-      endgameMesg = "Black wins!";
-    } else if (numBlackSeeds < numWhiteSeeds) {
-      endgameMesg = "White wins!";
-    }
-    statusContainer.innerText = endgameMesg;
+
+const endGame = (numBlackSeeds, numWhiteSeeds) => {
+  // background animation
+  // info-container: 'Victory!" 'You have lost" "Save-scum"
+  // most significant turn. animate change in seed poccession on board /game highlights
+  // or corners taken
+  // expandale. Other significant turns, click to show on board
+  // main btn
+
+  let endgameMesg;
+  let winner;
+  if (numBlackSeeds > numWhiteSeeds) {
+    endgameMesg = 'Black wins!';
+    winner = true;
+  } else if (numBlackSeeds < numWhiteSeeds) {
+    endgameMesg = 'White wins!';
+    winner = false;
   } else {
+    endgameMesg = 'Its a tie';
+    winner = null;
+  }
+  statusContainer.innerText = endgameMesg;
+  // send back to server who is the winner
+  mainPage();
+  axios
+    .put(`/game/${gameId}/${turnNum}/setwinner`, { opponentId, winner })
+    .then((response) => {
+
+    }).catch((e) => { console.log('error in setting winner', e); });
+};
+
+const renderGameStatusInfo = (gameStatus, numBlackSeeds, numWhiteSeeds) => {
+  if (gameStatus === GAMEHASENDED) {
+    endGame(numBlackSeeds, numWhiteSeeds);
+  } else {
+    // problem when gameStatus is undefined
     statusContainer.innerText = gameStatus;
   }
 };
@@ -49,14 +81,14 @@ const addToCell = (isBlackSeed, rowIndex, colIndex) => {
   cell.innerHTML += seed;
 };
 const initBoardElem = () => {
-  const table = document.createElement("table");
-  table.id = "boardGrid";
+  const table = document.createElement('table');
+  table.id = 'boardGrid';
   for (let i = 0; i < boardSize; i += 1) {
     const boardRow = table.insertRow();
     boardRow.id = `row_${i}`;
     for (let j = 0; j < boardSize; j += 1) {
       const boardCell = boardRow.insertCell();
-      boardCell.classList.add("board-colors");
+      boardCell.classList.add('board-colors');
       // follow convention A1... where A is column, 1 is row
       boardCell.id = `square_${i}_${j}`;
     }
@@ -64,9 +96,9 @@ const initBoardElem = () => {
   return table;
 };
 const initSeedElem = () => {
-  const table = document.createElement("table");
-  table.id = "seedGrid";
-  table.classList.add("seed-grid");
+  const table = document.createElement('table');
+  table.id = 'seedGrid';
+  table.classList.add('seed-grid');
 
   for (let i = 0; i < boardSize; i += 1) {
     const boardRow = table.insertRow();
@@ -80,10 +112,10 @@ const initSeedElem = () => {
   return table;
 };
 const initMovesGrid = () => {
-  const table = document.createElement("table");
-  table.id = "moveGrid";
+  const table = document.createElement('table');
+  table.id = 'moveGrid';
 
-  table.classList.add("potential-moves-grid");
+  table.classList.add('potential-moves-grid');
   for (let i = 0; i < boardSize; i += 1) {
     const boardRow = table.insertRow();
     for (let j = 0; j < boardSize; j += 1) {
@@ -95,10 +127,10 @@ const initMovesGrid = () => {
   return table;
 };
 const initFlippedGrid = () => {
-  const table = document.createElement("table");
-  table.id = "flipGrid";
+  const table = document.createElement('table');
+  table.id = 'flipGrid';
 
-  table.classList.add("potential-moves-grid");
+  table.classList.add('potential-moves-grid');
   for (let i = 0; i < boardSize; i += 1) {
     const boardRow = table.insertRow();
     for (let j = 0; j < boardSize; j += 1) {
@@ -110,8 +142,6 @@ const initFlippedGrid = () => {
   return table;
 };
 
-
-
 const removeElemById = (id, container) => {
   const element = document.querySelector(`#${id}`);
   if (element !== null) {
@@ -121,10 +151,10 @@ const removeElemById = (id, container) => {
 const renderBoard = (boardData) => {
   // re-renders board
   // removeElemById("boardGrid", gameContainer);
-  removeElemById("seedGrid", gameContainer);
+  removeElemById('seedGrid', gameContainer);
   // gameContainer.appendChild(initBoardElem());
   gameContainer.appendChild(initSeedElem());
-  console.log("boardData :>> ", boardData);
+  console.log('boardData :>> ', boardData);
   // run through board data, fill board
   for (let i = 0; i < boardData.length; i += 1) {
     const refRow = boardData[i];
@@ -137,100 +167,104 @@ const renderBoard = (boardData) => {
   }
 };
 const renderMoveGrid = (e) => {
-  if (e.key !== " ") {
+  if (e.key !== ' ') {
     return;
   }
-  removeElemById("moveGrid", gameContainer);
+  removeElemById('moveGrid', gameContainer);
   gameContainer.appendChild(initMovesGrid());
 
   coordValidMoves.forEach((coord) => {
     const [i, j] = coord;
     const moveCell = document.querySelector(`#move_${i}_${j}`);
     if (isBlackTurn === true) {
-      moveCell.classList.add("highlight-cell-black");
+      moveCell.classList.add('highlight-cell-black');
     } else if (isBlackTurn === false) {
-      moveCell.classList.add("highlight-cell-white");
+      moveCell.classList.add('highlight-cell-white');
     }
   });
 };
 
-const flippedSeedsGrid = ( flippedSeeds ) => {
-    console.log('flippedSeeds :>> ', flippedSeeds);
-    
-    removeElemById("flipGrid", gameContainer);
+const flippedSeedsGrid = (flippedSeeds) => {
+  console.log('flippedSeeds :>> ', flippedSeeds);
 
-    gameContainer.appendChild(initFlippedGrid());
-    flippedSeeds.forEach((coord) => {
-      const [i, j] = coord;
-      console.log('coord in flippedSeedGrid :>> ', coord);
-      const flipCell = document.querySelector(`#flip_${i}_${j}`);
-      flipCell.classList.add("highlight-new-seeds");
+  removeElemById('flipGrid', gameContainer);
+
+  gameContainer.appendChild(initFlippedGrid());
+  flippedSeeds.forEach((coord) => {
+    const [i, j] = coord;
+    console.log('coord in flippedSeedGrid :>> ', coord);
+    const flipCell = document.querySelector(`#flip_${i}_${j}`);
+    flipCell.classList.add('highlight-new-seeds');
   });
-}
+};
 
-document.addEventListener("keydown", renderMoveGrid);
-document.addEventListener("keyup", (e) => {
+document.addEventListener('keydown', renderMoveGrid);
+document.addEventListener('keyup', (e) => {
   if (e.keyCode !== 32) {
     return;
   }
-  removeElemById("moveGrid", gameContainer);
+  removeElemById('moveGrid', gameContainer);
 });
 
 const renderGameState = (gameState) => {
-  const { boardData, numBlackSeeds, numWhiteSeeds, gameStatus } = gameState;
-  console.log("boardData :>> ", boardData);
+  const {
+    boardData, numBlackSeeds, numWhiteSeeds, gameStatus,
+  } = gameState;
+  console.log('boardData :>> ', boardData);
   renderBoard(boardData);
   renderScoreInfo(numBlackSeeds, numWhiteSeeds);
   renderGameStatusInfo(gameStatus, numBlackSeeds, numWhiteSeeds);
 };
-const computerMove =  () => {
+const computerMove = () => {
   console.log('computermove');
   console.log('isBlackTurn :>> ', isBlackTurn);
-   setTimeout(()=>{
-  axios
-    .put(`/game/${gameId}/${turnNum}/computermove`, {
-      isBlackTurn,
-      difficultyLvl,
-    })
-    .then((response) => {
-      turnNum = response.data.turnNum;
-      isBlackTurn =response.data.isBlackTurn;
-      // change of turn
-      // get computer to play
-      const { gameState, validMoves, flippedSeeds } = response.data;
-      console.log('flippedSeeds :>> ', flippedSeeds);
+  setTimeout(() => {
+    axios
+      .put(`/game/${gameId}/${turnNum}/computermove`, {
+        isBlackTurn,
+        difficultyLvl,
+      })
+      .then((response) => {
+        turnNum = response.data.turnNum;
+        const prevTurn = isBlackTurn;
+        isBlackTurn = response.data.isBlackTurn;
+        // change of turn
+        // get computer to play
+        const { gameState, validMoves, flippedSeeds } = response.data;
+        console.log('flippedSeeds :>> ', flippedSeeds);
 
-      console.log('gameState in computerMove :>> ', gameState);
-     
-      renderGameState(gameState);
-      removeElemById("moveGrid", gameContainer);
-      flippedSeedsGrid(flippedSeeds);
-      coordValidMoves = validMoves.map((move) => move.coord);
+        console.log('gameState in computerMove :>> ', gameState);
 
-     
-    })
-    .catch((err) => console.log("error in computer making a move "));
-     },500)
+        renderGameState(gameState);
+        removeElemById('moveGrid', gameContainer);
+        flippedSeedsGrid(flippedSeeds);
+        coordValidMoves = validMoves.map((move) => move.coord);
+        if (prevTurn === isBlackTurn && gameState.gameStatus !== GAMEHASENDED) {
+          computerMove();
+        }
+      })
+      .catch((err) => console.log('error in computer making a move '));
+  }, 500);
 };
-const clickOnCell =  (e) => {
+const clickOnCell = (e) => {
   const cell = e.target;
   const cellId = cell.id;
   const [rowIndex, colIndex] = cellId
-    .split("_")
+    .split('_')
     .slice(1)
     .map((x) => parseInt(x, 10));
 
   const seedCell = document.querySelector(`#square_${rowIndex}_${colIndex}`);
 
-  if (seedCell.innerHTML !== "") {
+  if (seedCell.innerHTML !== '') {
     return;
   }
-  console.log("in click on grid");
+  console.log('in click on grid');
   // send
-   axios
+  axios
     .put(`/game/${gameId}/${turnNum}/move`, { isBlackTurn, colIndex, rowIndex })
     .then((response) => {
-      console.log("response.data in clickonCell:>> ", response.data);
+      console.log('response.data in clickonCell:>> ', response.data);
       if (response.data.isValidMove === false) {
         return;
       }
@@ -239,31 +273,34 @@ const clickOnCell =  (e) => {
       // get computer to play
       const { gameState, validMoves, flippedSeeds } = response.data;
       console.log('flippedSeeds :>> ', flippedSeeds);
-      removeElemById("moveGrid", gameContainer);
+      removeElemById('moveGrid', gameContainer);
 
       renderGameState(gameState);
       flippedSeedsGrid(flippedSeeds, isBlackTurn);
+      const prevTurn = isBlackTurn;
+
       isBlackTurn = response.data.isBlackTurn;
 
       coordValidMoves = validMoves.map((move) => move.coord);
-      if (gameType === "computer") {
-        console.log("asking computer to move");
-        return computerMove();
+
+      if (gameType === 'computer' && prevTurn !== isBlackTurn && gameState.gameStatus !== GAMEHASENDED) {
+        console.log('asking computer to move');
+        computerMove();
       }
     })
-    .catch((err) => console.log("error in clickOnCell:>> ", err));
+    .catch((err) => console.log('error in clickOnCell:>> ', err));
 };
 
 const initClickGrid = () => {
-  const table = document.createElement("table");
-  table.classList.add("click-grid");
+  const table = document.createElement('table');
+  table.classList.add('click-grid');
   for (let i = 0; i < boardSize; i += 1) {
     const boardRow = table.insertRow();
     for (let j = 0; j < boardSize; j += 1) {
       const boardCell = boardRow.insertCell();
       // follow convention A1... where A is column, 1 is row
       boardCell.id = `click_${i}_${j}`;
-      boardCell.addEventListener("click", clickOnCell);
+      boardCell.addEventListener('click', clickOnCell);
     }
   }
   return table;
@@ -272,10 +309,9 @@ const initClickGrid = () => {
 const initGame = (gameType, opponentId = 0) => {
   // booleanArray true: black, false: white, undefined/null: empty
   // initiator is black
-  playerIsBlack = true;
-  gameContainer.innerHTML=''
+  gameContainer.innerHTML = '';
   axios
-    .post("/games", {
+    .post('/games', {
       gameType,
       opponentId,
       playerIsBlack,
@@ -292,33 +328,34 @@ const initGame = (gameType, opponentId = 0) => {
 
       gameContainer.appendChild(initClickGrid());
       gameContainer.appendChild(initBoardElem());
-      
     })
-    .catch((e) => console.log("error in initGame:>> ", e));
+    .catch((e) => console.log('error in initGame:>> ', e));
 };
 const removeModal = () => {
-  document.body.classList.remove("modal-open");
-  const allBackdropElem = document.querySelectorAll(".modal-backdrop");
+  document.body.classList.remove('modal-open');
+  const allBackdropElem = document.querySelectorAll('.modal-backdrop');
   allBackdropElem.forEach((elem) => {
     const parent = elem.parentNode;
     parent.removeChild(elem);
   });
-  modalContainer.innerHTML = ""
+  modalContainer.innerHTML = '';
 };
 
 const intiComGame = () => {
-  gameType = "computer";
-  difficultyLvl = document.querySelector("#difficultyRange").value;
-  console.log("difficultyLvl :>> ", difficultyLvl);
-  console.log("in p vp computer");
+  isBlackTurn = true;
+  gameType = 'computer';
+  playerIsBlack = true;
+
+  difficultyLvl = document.querySelector('#difficultyRange').value;
+  console.log('difficultyLvl :>> ', difficultyLvl);
+  console.log('in p vp computer');
 
   // in computer player, all created moves by black will receive a reaction move from com
   removeModal();
   initGame(gameType);
   // need to await initGame  or put the different status msg in init game
-  statusContainer.innerText =
-    "Starting game against computer. You/Black starts first";
-  actionContainer.innerHTML = "";
+  statusContainer.innerText = 'Starting game against computer. You/Black starts first';
+  actionContainer.innerHTML = '';
   // init game
   // game board
   // fill info-container (who moves)
@@ -363,30 +400,30 @@ const comOptionsModal = () => {
   </div>`;
 
   modalContainer.innerHTML = optionsHTML;
-  const innerStartBtn = document.getElementById("startBtn");
+  const innerStartBtn = document.getElementById('startBtn');
 
-  innerStartBtn.addEventListener("click", intiComGame);
+  innerStartBtn.addEventListener('click', intiComGame);
 };
 
 const mainPage = () => {
   // fill header
   // render tip board/reversi puzzle (level? random warm up board? board of the great)
   // against ai, local multiplayer, find match btn
-  actionContainer.innerHTML = "";
+  actionContainer.innerHTML = '';
 
-  const playAgstComBtn = document.createElement("button");
-  playAgstComBtn.classList.add("btn", "btn-light");
-  playAgstComBtn.innerText = "Play against computer";
+  const playAgstComBtn = document.createElement('button');
+  playAgstComBtn.classList.add('btn', 'btn-light');
+  playAgstComBtn.innerText = 'Play against computer';
 
-  playAgstComBtn.addEventListener("click", () => {
+  playAgstComBtn.addEventListener('click', () => {
     comOptionsModal();
-    const optionM = new Modal(document.getElementById("optionsModal"));
+    const optionM = new Modal(document.getElementById('optionsModal'));
     optionM.toggle();
   });
 
-  const findMatchBtn = document.createElement("button");
-  findMatchBtn.classList.add("btn", "btn-info");
-  findMatchBtn.innerText = "Fight otters";
+  const findMatchBtn = document.createElement('button');
+  findMatchBtn.classList.add('btn', 'btn-info');
+  findMatchBtn.innerText = 'Fight otters';
 
   actionContainer.appendChild(playAgstComBtn);
   // -> lead to page with all users where player can pick their opponent
@@ -394,21 +431,21 @@ const mainPage = () => {
 };
 
 const submitSignUpForm = () => {
-  console.log("hey in signup");
-  const username = document.querySelector("#ottername").value;
-  const email = document.querySelector("#email").value;
-  const password = document.querySelector("#password").value;
-  const errorContainer = document.querySelector("#error-msg");
+  console.log('hey in signup');
+  const username = document.querySelector('#ottername').value;
+  const email = document.querySelector('#email').value;
+  const password = document.querySelector('#password').value;
+  const errorContainer = document.querySelector('#error-msg');
 
-  if (email === "" || password === "" || username === "") {
-    errorContainer.innerHTML = "Please fill in all the fields";
+  if (email === '' || password === '' || username === '') {
+    errorContainer.innerHTML = 'Please fill in all the fields';
 
-    errorContainer.classList.remove("d-none");
+    errorContainer.classList.remove('d-none');
     return;
   }
 
   axios
-    .post("/signup", { username, email, password })
+    .post('/signup', { username, email, password })
     .then((response) => {
       if (response.data.error) {
         throw response.data.error;
@@ -419,25 +456,25 @@ const submitSignUpForm = () => {
       mainPage();
     })
     .catch((error) => {
-      errorContainer.innerText = "Email already in use";
-      errorContainer.classList.remove("d-none");
+      errorContainer.innerText = 'Email already in use';
+      errorContainer.classList.remove('d-none');
       console.log(error);
     });
 };
 const submitLoginForm = () => {
-  console.log("hey");
-  const email = document.querySelector("#login-email").value;
-  const password = document.querySelector("#login-password").value;
-  const errorContainer = document.querySelector("#error-msg-login");
+  console.log('hey');
+  const email = document.querySelector('#login-email').value;
+  const password = document.querySelector('#login-password').value;
+  const errorContainer = document.querySelector('#error-msg-login');
 
-  if (email === "" || password === "") {
-    errorContainer.innerHTML = "Please fill in all the fields";
-    errorContainer.classList.remove("d-none");
+  if (email === '' || password === '') {
+    errorContainer.innerHTML = 'Please fill in all the fields';
+    errorContainer.classList.remove('d-none');
     return;
   }
 
   axios
-    .post("/login", { email, password })
+    .post('/login', { email, password })
     .then((response) => {
       if (response.data.error) {
         throw response.data.error;
@@ -448,8 +485,8 @@ const submitLoginForm = () => {
       mainPage();
     })
     .catch((error) => {
-      errorContainer.innerHTML = "Wrong email or password";
-      errorContainer.classList.remove("d-none");
+      errorContainer.innerHTML = 'Wrong email or password';
+      errorContainer.classList.remove('d-none');
       console.log(error);
     });
 };
@@ -484,9 +521,9 @@ const loginModal = () => {
 </div>`;
 
   modalContainer.innerHTML = loginHTML;
-  const innerLoginBtn = document.getElementById("innerLoginBtn");
+  const innerLoginBtn = document.getElementById('innerLoginBtn');
 
-  innerLoginBtn.addEventListener("click", submitLoginForm);
+  innerLoginBtn.addEventListener('click', submitLoginForm);
 };
 
 const signUpModal = () => {
@@ -524,51 +561,42 @@ const signUpModal = () => {
 </div>`;
 
   modalContainer.innerHTML = signupHTML;
-  const innerSignUpBtn = document.getElementById("innerSignUpBtn");
+  const innerSignUpBtn = document.getElementById('innerSignUpBtn');
 
-  innerSignUpBtn.addEventListener("click", submitSignUpForm);
+  innerSignUpBtn.addEventListener('click', submitSignUpForm);
 };
 
 const startPage = () => {
-  headerContainer.innerText = "RiverSea";
-  gameType = "local";
+  headerContainer.innerText = 'RiverSea';
+  gameType = 'local';
   initGame(gameType);
 
-  modalContainer.innerHTML = "";
-  const loginBtn = document.createElement("button");
-  loginBtn.classList.add("btn", "btn-info");
-  loginBtn.innerText = "Login";
+  modalContainer.innerHTML = '';
+  const loginBtn = document.createElement('button');
+  loginBtn.classList.add('btn', 'btn-info');
+  loginBtn.innerText = 'Login';
 
-  const signupBtn = document.createElement("button");
-  signupBtn.classList.add("btn", "btn-light");
-  signupBtn.innerText = "Sign up";
+  const signupBtn = document.createElement('button');
+  signupBtn.classList.add('btn', 'btn-light');
+  signupBtn.innerText = 'Sign up';
 
   actionContainer.appendChild(signupBtn);
 
   actionContainer.appendChild(loginBtn);
 
-  loginBtn.addEventListener("click", () => {
+  loginBtn.addEventListener('click', () => {
     loginModal();
 
-    const loginM = new Modal(document.getElementById("loginModal"));
+    const loginM = new Modal(document.getElementById('loginModal'));
     loginM.toggle();
   });
 
-  signupBtn.addEventListener("click", () => {
+  signupBtn.addEventListener('click', () => {
     signUpModal();
 
-    const signupM = new Modal(document.getElementById("signupModal"));
+    const signupM = new Modal(document.getElementById('signupModal'));
     signupM.toggle();
   });
-};
-
-const endGame = () => {
-  // background animation
-  // info-container: 'Victory!" 'You have lost" "Save-scum"
-  // most significant turn. animate change in seed poccession on board /game highlights
-  // or corners taken
-  // expandale. Other significant turns, click to show on board
-  // main btn
 };
 
 const animateBetweenTurns = () => {
@@ -583,8 +611,10 @@ const findMatchModal = () => {
   // find another, play btn
 };
 const multiplayerLocalGame = () => {
-  console.log("in multiplayer local");
-  initGame("local");
+  console.log('in multiplayer local');
+  playerIsBlack = true;
+
+  initGame('local');
 
   // black player
   // white player
