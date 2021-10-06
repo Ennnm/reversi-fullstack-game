@@ -1,5 +1,5 @@
 export default function userStatusModel(sequelize, DataTypes) {
-  return sequelize.define('user_statuses', {
+  return sequelize.define('user_status', {
     id: {
       allowNull: false,
       autoIncrement: true,

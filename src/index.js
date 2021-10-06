@@ -42,22 +42,22 @@ const endGame = (numBlackSeeds, numWhiteSeeds) => {
   // main btn
 
   let endgameMesg;
-  let winner;
+  let blackIsWinner;
   if (numBlackSeeds > numWhiteSeeds) {
     endgameMesg = 'Black wins!';
-    winner = true;
+    blackIsWinner = true;
   } else if (numBlackSeeds < numWhiteSeeds) {
     endgameMesg = 'White wins!';
-    winner = false;
+    blackIsWinner = false;
   } else {
     endgameMesg = 'Its a tie';
-    winner = null;
+    blackIsWinner = null;
   }
   statusContainer.innerText = endgameMesg;
   // send back to server who is the winner
   mainPage();
   axios
-    .put(`/game/${gameId}/${turnNum}/setwinner`, { winner })
+    .put(`/game/${gameId}/${turnNum}/setwinner`, { blackIsWinner })
     .then((response) => {
 
     }).catch((e) => { console.log('error in setting winner', e); });
@@ -401,6 +401,10 @@ const comOptionsModal = () => {
 
   innerStartBtn.addEventListener('click', intiComGame);
 };
+
+const askToPlay = (userId) => {
+  console.log('asked userId to play :>> ', userId);
+};
 const usersModal = () => {
   // easy, medium, hard (1,2,3)
   // show moves toggle
@@ -408,7 +412,7 @@ const usersModal = () => {
   // play btn (start computer vs player game)
 
   const usersHTML = `<div class="modal fade " id="usersModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog " style="max-width:1000px">
       <div class="modal-content">
 
         <div class="modal-header">
@@ -419,14 +423,15 @@ const usersModal = () => {
         <div class="modal-body"  >
           <div>
             <div class="mb-3">
-              <table>
+              <table id ="online-users-table">
                 <tr>
                   <th>Otter</th>
                   <th>Rank (W/L/T)</th>
                   <th>Status</th>
+                  <th>Last active</th>
                   <th>Invite to play</th>
                 </tr>
-                <div id ="online-users-table">
+                <div >
               </div>
               </table>
             </div>
@@ -469,7 +474,28 @@ const usersModal = () => {
   // axios get online player
   axios.get('/recentlyonline')
     .then((response) => {
+      const { onlineUsers } = response.data;
+      onlineUsers.forEach((user) => {
+        const tableRow = document.createElement('tr');
+        onlineUsersContainer.appendChild(tableRow);
+        tableRow.innerHTML += `
+        <td class="user-table-border">${user.username}</td>
+        <td class="user-table-border">${user.userId}</td>
+        <td class="user-table-border">${user.status}</td>
+        <td class="user-table-border">${user.lastActive}</td>
+        `;
+        const challengeUserData = document.createElement('td');
+        challengeUserData.classList.add('user-table-border');
 
+        const challengeUserBtn = document.createElement('button');
+        challengeUserBtn.innerText = 'Play';
+        challengeUserBtn.addEventListener('click', () => { askToPlay(user.userId); });
+
+        challengeUserData.appendChild(challengeUserBtn);
+        tableRow.appendChild(challengeUserData);
+
+        // <td><button id='challenge_${user.userId}' onclick='askToPlay'>Play</button></td>
+      });
     }).catch((e) => {
       console.log('error in getting online players', e);
     });

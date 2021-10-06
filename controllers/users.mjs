@@ -1,4 +1,5 @@
 import pkg from 'sequelize';
+import moment from 'moment';
 import { getHash, checkError } from '../src/util.mjs';
 
 const { Op } = pkg;
@@ -40,10 +41,11 @@ export default function initUserController(db) {
         // await db.LoginToken.create({
         //   userId,
         // });
+        const currentDate = new Date();
         await db.Status.create({
           userId,
-          in_game: false,
-          last_action: new Date(),
+          inGame: false,
+          lastAction: currentDate,
         });
         res.cookie('loggedIn', getHash(userId));
         res.cookie('userId', userId);
@@ -123,42 +125,30 @@ export default function initUserController(db) {
   const recentlyOnline = async (req, res) => {
     const currentPlayer = req.cookies.userId;
     const currentTime = new Date();
-    // const loggedInUsers = await db.LoginToken.findAll({
-    //   where: {
-    //     expires_at: {
-    //       [Op.gte]: currentTime,
-    //     },
-    //     user_id: {
-    //       [Op.ne]: currentPlayer,
-    //     },
-    //   },
-    //   include: {
-    //     model: db.User,
-    //     include: []
-    //   },
-    // });
-    // include user to include username, search user_status where last_action was recent
-    // console.log('loggedInUsers :>> ', loggedInUsers);
-    let matchUser;
-    let isOfflineMatch = true;
-    if (loggedInUsers.length === 0) {
-      const allUsers = await db.User.findAll({
-        where: {
-          id: {
-            [Op.ne]: currentPlayer,
-          },
+    const min = -30;
+    const cutOffTime = new Date(currentTime.getTime() + min * 60000);
+    let onlineUsers = await db.Status.findAll({
+      where: {
+        lastAction: {
+          [Op.gte]: cutOffTime,
         },
-      });
-      matchUser = allUsers[Math.floor(allUsers.length * Math.random())];
-    }
-    else
-    {
-      console.log('matched with logged in player');
-      matchUser = loggedInUsers[Math.floor(loggedInUsers.length * Math.random())];
-      isOfflineMatch = false;
-    }
-    console.log('loggedInUsers :>> ', loggedInUsers);
-    res.send({ id: matchUser.id, isOfflineMatch });
+      },
+      include:
+        [{
+          model: db.User,
+        }],
+
+      order: [['inGame', 'ASC'], ['lastAction', 'DESC']],
+    });
+
+    onlineUsers = onlineUsers.map((user) => ({
+      userId: user.userId,
+      username: user.user.username,
+      status: user.inGame ? 'In game' : 'Available',
+      lastActive: moment(user.lastAction).fromNow(),
+    }));
+    console.log('loggedInUsers :>> ', onlineUsers);
+    res.send({ onlineUsers });
   };
 
   const offline = async (req, res) => {
