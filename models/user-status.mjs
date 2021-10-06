@@ -1,5 +1,11 @@
 export default function userStatusModel(sequelize, DataTypes) {
-  return sequelize.define('user_status', {
+  return sequelize.define('user_statuses', {
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER,
+    },
     userId: {
       type: DataTypes.INTEGER,
       references: {

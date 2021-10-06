@@ -7,7 +7,6 @@ import gameModel from './game.mjs';
 import tipModel from './tip.mjs';
 import userStatusModel from './user-status.mjs';
 import turnModel from './turn.mjs';
-import loginsModel from './logins.mjs';
 
 const env = process.env.NODE_ENV || 'development';
 const config = allConfig[env];
@@ -39,9 +38,8 @@ else {
 db.User = userModel(sequelize, Sequelize.DataTypes);
 db.Game = gameModel(sequelize, Sequelize.DataTypes);
 db.Tip = tipModel(sequelize, Sequelize.DataTypes);
-db.status = userStatusModel(sequelize, Sequelize.DataTypes);
+db.Status = userStatusModel(sequelize, Sequelize.DataTypes);
 db.Turn = turnModel(sequelize, Sequelize.DataTypes);
-db.LoginToken = loginsModel(sequelize, Sequelize.DataTypes);
 
 // each user has multiple games
 db.User.hasMany(db.Game, {
@@ -74,12 +72,11 @@ db.Game.belongsTo(db.User, {
   foreignKey: 'winner_id',
 });
 // can call user.getStatus()
-db.User.hasOne(db.status);
+db.User.hasOne(db.Status);
+db.Status.belongsTo(db.User);
 
 // can call game.getTurn()
 db.Game.hasMany(db.Turn);
-
-db.User.hasOne(db.LoginToken);
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;

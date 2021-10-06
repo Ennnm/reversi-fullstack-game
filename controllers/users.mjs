@@ -11,6 +11,12 @@ export default function initUserController(db) {
     loginToken.updatedAt = currentDate;
     await loginToken.save();
   };
+  const updateStatus = async (userId) => {
+    const status = await db.Status.findOne({ where: { userId } });
+    const currentDate = new Date();
+    status.lastAction = currentDate;
+    await status.save();
+  };
   const create = async (req, res) => {
     const { username, email, password } = req.body;
     try {
@@ -31,10 +37,14 @@ export default function initUserController(db) {
           },
         );
         const userId = userSqx.id;
-        await db.LoginToken.create({
+        // await db.LoginToken.create({
+        //   userId,
+        // });
+        await db.Status.create({
           userId,
+          in_game: false,
+          last_action: new Date(),
         });
-
         res.cookie('loggedIn', getHash(userId));
         res.cookie('userId', userId);
         res.send({ userId });
@@ -57,8 +67,8 @@ export default function initUserController(db) {
       });
       if (foundUser !== null) {
         const userId = foundUser.id;
-        await updateLoginToken(userId);
-
+        // await updateLoginToken(userId);
+        await updateStatus(userId);
         res.cookie('loggedIn', getHash(userId));
         res.cookie('userId', userId);
         res.send({ userId });
@@ -109,9 +119,57 @@ export default function initUserController(db) {
     console.log('matchUser :>> ', matchUser);
     res.send({ id: matchUser.id, isOfflineMatch });
   };
+
+  const recentlyOnline = async (req, res) => {
+    const currentPlayer = req.cookies.userId;
+    const currentTime = new Date();
+    // const loggedInUsers = await db.LoginToken.findAll({
+    //   where: {
+    //     expires_at: {
+    //       [Op.gte]: currentTime,
+    //     },
+    //     user_id: {
+    //       [Op.ne]: currentPlayer,
+    //     },
+    //   },
+    //   include: {
+    //     model: db.User,
+    //     include: []
+    //   },
+    // });
+    // include user to include username, search user_status where last_action was recent
+    // console.log('loggedInUsers :>> ', loggedInUsers);
+    let matchUser;
+    let isOfflineMatch = true;
+    if (loggedInUsers.length === 0) {
+      const allUsers = await db.User.findAll({
+        where: {
+          id: {
+            [Op.ne]: currentPlayer,
+          },
+        },
+      });
+      matchUser = allUsers[Math.floor(allUsers.length * Math.random())];
+    }
+    else
+    {
+      console.log('matched with logged in player');
+      matchUser = loggedInUsers[Math.floor(loggedInUsers.length * Math.random())];
+      isOfflineMatch = false;
+    }
+    console.log('loggedInUsers :>> ', loggedInUsers);
+    res.send({ id: matchUser.id, isOfflineMatch });
+  };
+
+  const offline = async (req, res) => {
+
+  };
+
   return {
     create,
     login,
     findMatch,
+    recentlyOnline,
+    offline,
   };
 }

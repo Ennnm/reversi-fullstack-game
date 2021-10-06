@@ -57,7 +57,7 @@ const endGame = (numBlackSeeds, numWhiteSeeds) => {
   // send back to server who is the winner
   mainPage();
   axios
-    .put(`/game/${gameId}/${turnNum}/setwinner`, { opponentId, winner })
+    .put(`/game/${gameId}/${turnNum}/setwinner`, { winner })
     .then((response) => {
 
     }).catch((e) => { console.log('error in setting winner', e); });
@@ -231,9 +231,6 @@ const computerMove = () => {
         // change of turn
         // get computer to play
         const { gameState, validMoves, flippedSeeds } = response.data;
-        console.log('flippedSeeds :>> ', flippedSeeds);
-
-        console.log('gameState in computerMove :>> ', gameState);
 
         renderGameState(gameState);
         removeElemById('moveGrid', gameContainer);
@@ -404,6 +401,81 @@ const comOptionsModal = () => {
 
   innerStartBtn.addEventListener('click', intiComGame);
 };
+const usersModal = () => {
+  // easy, medium, hard (1,2,3)
+  // show moves toggle
+  // save btn (update user_option table)
+  // play btn (start computer vs player game)
+
+  const usersHTML = `<div class="modal fade " id="usersModal" tabindex="-1" aria-labelledby="optionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalLabel">Online</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body"  >
+          <div>
+            <div class="mb-3">
+              <table>
+                <tr>
+                  <th>Otter</th>
+                  <th>Rank (W/L/T)</th>
+                  <th>Status</th>
+                  <th>Invite to play</th>
+                </tr>
+                <div id ="online-users-table">
+              </div>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalLabel">Offline</h5>
+        </div>
+
+        <div class="modal-body" ">
+          <div>
+            <div class="mb-3">
+              <table>
+                <tr>
+                  <th>Otter</th>
+                  <th>Rank</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+                <div id = "offline-users-table" >
+                </div>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="startBtn" class="btn btn-info">Challenge</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  modalContainer.innerHTML = usersHTML;
+  const innerStartBtn = document.getElementById('startBtn');
+  // create challenge button for each user
+  const onlineUsersContainer = document.getElementById('online-users-table');
+  const offlineUsersContainer = document.getElementById('offline-users-table');
+  // axios get online player
+  axios.get('/recentlyonline')
+    .then((response) => {
+
+    }).catch((e) => {
+      console.log('error in getting online players', e);
+    });
+
+  innerStartBtn.addEventListener('click', intiComGame);
+};
 
 const mainPage = () => {
   // fill header
@@ -424,6 +496,12 @@ const mainPage = () => {
   const findMatchBtn = document.createElement('button');
   findMatchBtn.classList.add('btn', 'btn-info');
   findMatchBtn.innerText = 'Fight otters';
+
+  findMatchBtn.addEventListener('click', () => {
+    usersModal();
+    const userM = new Modal(document.getElementById('usersModal'));
+    userM.toggle();
+  });
 
   actionContainer.appendChild(playAgstComBtn);
   // -> lead to page with all users where player can pick their opponent

@@ -20,7 +20,11 @@ export default function bindRoutes(app) {
 
   app.put('/game/:gameId/:turnNum/move', gameController.createMove);
   app.put('/game/:gameId/:turnNum/computermove', gameController.computerMove);
+  app.put('/game/:gameId/:turnNum/setwinner', gameController.setWinner);
 
   app.post('/signup', userController.create);
   app.post('/login', userController.login);
+
+  app.get('/recentlyonline', userController.recentlyOnline);
+  app.get('/offline', userController.offline);
 }

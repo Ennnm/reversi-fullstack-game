@@ -48,7 +48,7 @@ export default function initGamesController(db) {
     let { userId } = request.cookies;
     const { gameType, playerIsBlack, difficultyLvl } = request.body;
 
-    userId = 1;
+    userId = userId || 1;
     // console.log('userIds :>> ', userId);
 
     const boardData = gameLogic.startingBoard();
@@ -313,27 +313,18 @@ export default function initGamesController(db) {
   };
 
   const setWinner = async (req, res) => {
-    const gameId = req.params.id;
-    const { playerId, isWin } = req.body;
+    const { gameId } = req.params;
+    const { blackIsWinner } = req.body;
 
-    const game = await db.Game.findByPk(gameId);
-    let winner;
-    if (isWin) {
-      winner = await db.User.findByPk(playerId);
+    if (blackIsWinner !== null)
+    {
+      const game = await db.Game.findByPk(gameId);
+      console.log('game :>> ', game);
+      const winnerId = blackIsWinner ? game.blackId : game.whiteId;
+      if (winnerId !== null) {
+        game.setWinner(winnerId);
+      }
     }
-    else {
-      // not working
-      winner = await game.getUsers({
-        where: {
-          id: {
-            [Op.ne]: playerId,
-          },
-        },
-      });
-    }
-    console.log('winner :>> ', winner);
-
-    game.setWinner(winner.id);
   };
   // return all functions we define in an object
   // refer to the routes file above to see this used
