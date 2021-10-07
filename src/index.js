@@ -428,7 +428,7 @@ const usersModal = () => {
                   <th>Otter</th>
                   <th>Rank (W/L/T)</th>
                   <th>Status</th>
-                  <th>Last active</th>
+                  <th>Last seen</th>
                   <th>Invite to play</th>
                 </tr>
                 <div >
@@ -445,62 +445,70 @@ const usersModal = () => {
         <div class="modal-body" ">
           <div>
             <div class="mb-3">
-              <table>
+              <table id = "offline-users-table">
                 <tr>
                   <th>Otter</th>
                   <th>Rank</th>
-                  <th>Status</th>
+                  <th></th>
+                  <th>Last active</th>
                   <th></th>
                 </tr>
-                <div id = "offline-users-table" >
-                </div>
               </table>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-          <button type="button" id="startBtn" class="btn btn-info">Challenge</button>
         </div>
       </div>
     </div>
   </div>`;
 
   modalContainer.innerHTML = usersHTML;
-  const innerStartBtn = document.getElementById('startBtn');
   // create challenge button for each user
   const onlineUsersContainer = document.getElementById('online-users-table');
   const offlineUsersContainer = document.getElementById('offline-users-table');
   // axios get online player
-  axios.get('/recentlyonline')
+  axios.get('/users')
     .then((response) => {
-      const { onlineUsers } = response.data;
+      const { onlineUsers, offlineUsers } = response.data;
       onlineUsers.forEach((user) => {
+        // 'online users'
         const tableRow = document.createElement('tr');
         onlineUsersContainer.appendChild(tableRow);
         tableRow.innerHTML += `
-        <td class="user-table-border">${user.username}</td>
-        <td class="user-table-border">${user.userId}</td>
-        <td class="user-table-border">${user.status}</td>
-        <td class="user-table-border">${user.lastActive}</td>
+        <td class="user-table">${user.username}</td>
+        <td class="user-table">${user.userId}</td>
+        <td class="user-table">${user.status}</td>
+        <td class="user-table">${user.lastActive}</td>
         `;
         const challengeUserData = document.createElement('td');
-        challengeUserData.classList.add('user-table-border');
+        challengeUserData.classList.add('user-table', 'text-center');
 
         const challengeUserBtn = document.createElement('button');
+        challengeUserBtn.classList.add('btn', 'btn-info');
         challengeUserBtn.innerText = 'Play';
         challengeUserBtn.addEventListener('click', () => { askToPlay(user.userId); });
 
         challengeUserData.appendChild(challengeUserBtn);
         tableRow.appendChild(challengeUserData);
+      });
 
-        // <td><button id='challenge_${user.userId}' onclick='askToPlay'>Play</button></td>
+      // 'offline users'
+      offlineUsers.forEach((user) => {
+        const tableRowOffline = document.createElement('tr');
+        offlineUsersContainer.appendChild(tableRowOffline);
+        tableRowOffline.innerHTML += `
+        <td class="user-table">${user.username}</td>
+        <td class="user-table">${user.userId}</td>
+        <td class="user-table"></td>
+        <td class="user-table">${user.lastActive}</td>
+        <td class="user-table"></td>
+        `;
       });
     }).catch((e) => {
       console.log('error in getting online players', e);
     });
-
-  innerStartBtn.addEventListener('click', intiComGame);
 };
 
 const mainPage = () => {

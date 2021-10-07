@@ -25,6 +25,5 @@ export default function bindRoutes(app) {
   app.post('/signup', userController.create);
   app.post('/login', userController.login);
 
-  app.get('/recentlyonline', userController.recentlyOnline);
-  app.get('/offline', userController.offline);
+  app.get('/users', userController.userStatuses);
 }

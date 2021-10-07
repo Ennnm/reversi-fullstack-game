@@ -121,16 +121,30 @@ export default function initUserController(db) {
     console.log('matchUser :>> ', matchUser);
     res.send({ id: matchUser.id, isOfflineMatch });
   };
+  const min = -30;
 
-  const recentlyOnline = async (req, res) => {
+  const userStatuses = async (req, res) => {
     const currentPlayer = req.cookies.userId;
     const currentTime = new Date();
-    const min = -30;
     const cutOffTime = new Date(currentTime.getTime() + min * 60000);
     let onlineUsers = await db.Status.findAll({
       where: {
         lastAction: {
           [Op.gte]: cutOffTime,
+        },
+      },
+      include:
+        [{
+          model: db.User,
+        }],
+
+      order: [['inGame', 'ASC'], ['lastAction', 'DESC']],
+    });
+
+    let offlineUsers = await db.Status.findAll({
+      where: {
+        lastAction: {
+          [Op.lte]: cutOffTime,
         },
       },
       include:
@@ -147,19 +161,21 @@ export default function initUserController(db) {
       status: user.inGame ? 'In game' : 'Available',
       lastActive: moment(user.lastAction).fromNow(),
     }));
+
+    offlineUsers = offlineUsers.map((user) => ({
+      userId: user.userId,
+      username: user.user.username,
+      lastActive: moment(user.lastAction).fromNow(),
+    }));
+
     console.log('loggedInUsers :>> ', onlineUsers);
-    res.send({ onlineUsers });
-  };
-
-  const offline = async (req, res) => {
-
+    res.send({ onlineUsers, offlineUsers });
   };
 
   return {
     create,
     login,
     findMatch,
-    recentlyOnline,
-    offline,
+    userStatuses,
   };
 }
