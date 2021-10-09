@@ -5,7 +5,8 @@ const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
   entry: {
-    main: './src/index.js',
+    main: ['regenerator-runtime/runtime.js', './src/index.js'],
+    // main: './src/index.js',
   },
   mode: 'development',
   devtool: 'inline-source-map',

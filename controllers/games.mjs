@@ -49,7 +49,6 @@ export default function initGamesController(db) {
     const { gameType, playerIsBlack, difficultyLvl } = request.body;
 
     userId = userId || 1;
-    // console.log('userIds :>> ', userId);
 
     const boardData = gameLogic.startingBoard();
     const validMoves = gameLogic.getValidMoves(boardData, true);
@@ -118,6 +117,24 @@ export default function initGamesController(db) {
         },
       });
       res.status(200).send(gameTurn);
+
+      // send back game status in response
+    } catch (error) {
+      console.log('error in showing current game status');
+      checkError(error);
+      res.status(500).send(error);
+    }
+  };
+  const showLatestTurn = async (req, res) => {
+    const { gameId } = req.params;
+    console.log('gameId :>> ', gameId);
+    try {
+      const gameTurn = await db.Turn.findOne({
+        where: { game_id: gameId },
+        order: [['turn_num', 'DESC']],
+
+      });
+      res.status(200).send({ gameTurn });
 
       // send back game status in response
     } catch (error) {
@@ -372,6 +389,17 @@ export default function initGamesController(db) {
       }
     }
   };
+  const editPlayers = async (req, res) => {
+    const whiteId = req.cookies.userId;
+    const { gameId } = req.params;
+    console.log('gameId :>> ', gameId);
+    const game = await db.Game.findByPk(parseInt(gameId, 10));
+    game.whiteId = whiteId;
+    await game.save({ fields: ['whiteId'] });
+    await game.reload();
+
+    res.send(game);
+  };
   // return all functions we define in an object
   // refer to the routes file above to see this used
   return {
@@ -379,9 +407,11 @@ export default function initGamesController(db) {
     index,
     show,
     showTurn,
+    showLatestTurn,
     showOpen,
     createMove,
     computerMove,
     setWinner,
+    editPlayers,
   };
 }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { AsyncIterator } from 'regenerator-runtime/runtime';
 // import { createPopper } from '@popperjs/core';
 import { Modal } from 'bootstrap';
 import './styles.scss';
@@ -11,6 +12,7 @@ import './styles.scss';
 const headerContainer = document.querySelector('#header-container');
 const gameContainer = document.querySelector('#game-container');
 const infoContainer = document.querySelector('#info-container');
+const secInfoContainer = document.querySelector('#sec-info-container');
 const statusContainer = document.querySelector('#status-container');
 const actionContainer = document.querySelector('#action-container');
 const modalContainer = document.querySelector('#modal-container');
@@ -290,6 +292,7 @@ const clickOnCell = (e) => {
 
 const initClickGrid = () => {
   const table = document.createElement('table');
+  table.id = 'click-grid';
   table.classList.add('click-grid');
   for (let i = 0; i < boardSize; i += 1) {
     const boardRow = table.insertRow();
@@ -303,11 +306,12 @@ const initClickGrid = () => {
   return table;
 };
 
-const initGame = (gameType, opponentId = 0) => {
+const initGame = async (gameType, opponentId = null) => {
   // booleanArray true: black, false: white, undefined/null: empty
   // initiator is black
   gameContainer.innerHTML = '';
-  axios
+
+  await axios
     .post('/games', {
       gameType,
       opponentId,
@@ -325,8 +329,7 @@ const initGame = (gameType, opponentId = 0) => {
 
       gameContainer.appendChild(initClickGrid());
       gameContainer.appendChild(initBoardElem());
-    })
-    .catch((e) => console.log('error in initGame:>> ', e));
+    }).catch((e) => console.log('error in initGame:>> ', e));
 };
 const removeModal = () => {
   document.body.classList.remove('modal-open');
@@ -338,7 +341,7 @@ const removeModal = () => {
   modalContainer.innerHTML = '';
 };
 
-const initComGame = () => {
+const initComGame = async () => {
   isBlackTurn = true;
   gameType = 'computer';
   playerIsBlack = true;
@@ -349,9 +352,9 @@ const initComGame = () => {
 
   // in computer player, all created moves by black will receive a reaction move from com
   removeModal();
-  initGame(gameType);
+  await initGame(gameType);
   // need to await initGame  or put the different status msg in init game
-  statusContainer.innerText = 'Starting game against computer. You/Black starts first';
+  secInfoContainer.innerText = 'Starting game against computer. You/Black starts first';
   actionContainer.innerHTML = '';
   // init game
   // game board
@@ -361,10 +364,7 @@ const initComGame = () => {
   // undo btn -> undo > 3 times: labelled as save scum, save boards of shame
   // surrender btn -> end game
 };
-const initOnlineGame = () => {
-  initGame('online');
-  // status container username/color's turn
-};
+
 const comOptionsModal = () => {
   // easy, medium, hard (1,2,3)
   // show moves toggle
@@ -404,7 +404,71 @@ const comOptionsModal = () => {
 
   innerStartBtn.addEventListener('click', initComGame);
 };
+const initOnlineGame = async () => {
+  isBlackTurn = true;
+  gameType = 'computer';
+  playerIsBlack = true;
+  removeModal();
+
+  await initGame('online');
+  const clickGrid = document.getElementById('click-grid');
+  console.log('clickGrid :>> ', clickGrid);
+  // init game is happening async
+  gameContainer.removeChild(clickGrid);
+
+  secInfoContainer.innerText = ' Waiting for opponent to join.';
+  //   actionContainer.appendChild(playAgstComBtn);
+  // // -> lead to page with all users where player can pick their opponent
+  // actionContainer.appendChild(findMatchBtn);
+  // status container username/color's turn
+  // deactivate clicking board while waiting for opponent to arrive
+  // when opponent joins and click 'startgame'
+  // clicking board is activated
+  // game is started, black gets to click on the board
+  // modal popout sent to black to tell them their game has started
+  // black can click on button to start game
+  // if click is valid, 'black moved' sent to white for white's board to update
+  // vice versa
+};
+const activateBoard = () => {
+  gameContainer.appendChild(initClickGrid());
+  const startGameBtn = document.getElementById('startGameBtn');
+  actionContainer.removeChild(startGameBtn);
+  console.log('activating the board');
+};
 const joinRoom = (game) => {
+  isBlackTurn = true;
+  playerIsBlack = false;
+  removeModal();
+  console.log('game :>> ', game);
+  // update opponent name in database for game
+  axios.put(`/game/${game.gameId}/editplayers`)
+    .then((response) => {
+      console.log('response in join room :>> ', response);
+    })
+    .catch((e) => {
+      console.log('error in joining game room', e);
+    });
+  axios.get(`/game/${game.gameId}/showlatestturn`)
+    .then((response) => {
+      const { gameTurn } = response.data;
+      renderGameState(gameTurn.gameState);
+
+      const clickGrid = document.getElementById('click-grid');
+      gameContainer.removeChild(clickGrid);
+    }).catch((e) => {
+      console.log('error with getting and rendering next turn', e);
+    });
+  const startGameBtn = document.createElement('button');
+  startGameBtn.classList.add('btn', 'btn-info');
+  startGameBtn.id = 'startGameBtn';
+  startGameBtn.innerText = 'Start game';
+  actionContainer.appendChild(startGameBtn);
+  startGameBtn.addEventListener('click', activateBoard);
+
+  // '/games/:gameId'
+  // render gameboard based on latest game turn
+  // enable black to click grid
   console.log('asked userId to play :>> ', game);
 };
 
@@ -436,7 +500,7 @@ const usersModal = () => {
                 <div>
               </div>
               </table>
-              <button class="btn btn-info justify-content-end">Create room</button>
+              <button class="btn btn-info justify-content-end" id="create-room-btn">Create room</button>
             </div>
           </div>
         </div>
@@ -501,6 +565,8 @@ const usersModal = () => {
     }).catch((e) => {
       console.log('error in getting open rooms ', e);
     });
+  const createMultiplayerOnlineBtn = document.getElementById('create-room-btn');
+  createMultiplayerOnlineBtn.addEventListener('click', initOnlineGame);
   // axios get online player
   axios.get('/users')
     .then((response) => {
