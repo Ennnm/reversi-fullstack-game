@@ -338,7 +338,7 @@ const removeModal = () => {
   modalContainer.innerHTML = '';
 };
 
-const intiComGame = () => {
+const initComGame = () => {
   isBlackTurn = true;
   gameType = 'computer';
   playerIsBlack = true;
@@ -361,7 +361,10 @@ const intiComGame = () => {
   // undo btn -> undo > 3 times: labelled as save scum, save boards of shame
   // surrender btn -> end game
 };
-
+const initOnlineGame = () => {
+  initGame('online');
+  // status container username/color's turn
+};
 const comOptionsModal = () => {
   // easy, medium, hard (1,2,3)
   // show moves toggle
@@ -399,12 +402,12 @@ const comOptionsModal = () => {
   modalContainer.innerHTML = optionsHTML;
   const innerStartBtn = document.getElementById('startBtn');
 
-  innerStartBtn.addEventListener('click', intiComGame);
+  innerStartBtn.addEventListener('click', initComGame);
+};
+const joinRoom = (game) => {
+  console.log('asked userId to play :>> ', game);
 };
 
-const askToPlay = (userId) => {
-  console.log('asked userId to play :>> ', userId);
-};
 const usersModal = () => {
   // easy, medium, hard (1,2,3)
   // show moves toggle
@@ -416,8 +419,29 @@ const usersModal = () => {
       <div class="modal-content">
 
         <div class="modal-header">
-          <h5 class="modal-title" id="userModalLabel">Online</h5>
+          <h5 class="modal-title" id="userModalLabel">Game rooms</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body ">
+          <div>
+            <div class="mb-3">
+              <table id ="game-room-table">
+                <tr>
+                  <th>Game master</th>
+                  <th>User status</th>
+                  <th>Created</th>
+                  <th>Join</th>
+                </tr>
+                <div>
+              </div>
+              </table>
+              <button class="btn btn-info justify-content-end">Create room</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalLabel">Online</h5>
         </div>
 
         <div class="modal-body"  >
@@ -429,7 +453,6 @@ const usersModal = () => {
                   <th>Rank (W/L/T)</th>
                   <th>Status</th>
                   <th>Last seen</th>
-                  <th>Invite to play</th>
                 </tr>
                 <div >
               </div>
@@ -438,25 +461,7 @@ const usersModal = () => {
           </div>
         </div>
 
-        <div class="modal-header">
-          <h5 class="modal-title" id="userModalLabel">Offline</h5>
-        </div>
-
-        <div class="modal-body" ">
-          <div>
-            <div class="mb-3">
-              <table id = "offline-users-table">
-                <tr>
-                  <th>Otter</th>
-                  <th>Rank</th>
-                  <th></th>
-                  <th>Last active</th>
-                  <th></th>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
+       
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
         </div>
@@ -466,8 +471,36 @@ const usersModal = () => {
 
   modalContainer.innerHTML = usersHTML;
   // create challenge button for each user
+  const gameRoomContainer = document.getElementById('game-room-table');
+
   const onlineUsersContainer = document.getElementById('online-users-table');
-  const offlineUsersContainer = document.getElementById('offline-users-table');
+  // axios get recent open games
+  axios.get('/openrooms')
+    .then((response) => {
+      const { openGames } = response.data;
+      console.log('openGames :>> ', openGames);
+      openGames.forEach((game) => {
+        const tableRow = document.createElement('tr');
+        gameRoomContainer.appendChild(tableRow);
+        tableRow.innerHTML += `
+        <td class="user-table">${game.blackUserName}</td>
+        <td class="user-table">${game.blackInGame ? 'In game' : 'Available'}</td>
+        <td class="user-table">${game.createdAt}</td>
+        `;
+        const challengeUserData = document.createElement('td');
+        challengeUserData.classList.add('user-table', 'text-center');
+
+        const challengeUserBtn = document.createElement('button');
+        challengeUserBtn.classList.add('btn', 'btn-info');
+        challengeUserBtn.innerText = 'Join';
+        challengeUserBtn.addEventListener('click', () => { joinRoom(game); });
+
+        challengeUserData.appendChild(challengeUserBtn);
+        tableRow.appendChild(challengeUserData);
+      });
+    }).catch((e) => {
+      console.log('error in getting open rooms ', e);
+    });
   // axios get online player
   axios.get('/users')
     .then((response) => {
@@ -481,29 +514,6 @@ const usersModal = () => {
         <td class="user-table">${user.userId}</td>
         <td class="user-table">${user.status}</td>
         <td class="user-table">${user.lastActive}</td>
-        `;
-        const challengeUserData = document.createElement('td');
-        challengeUserData.classList.add('user-table', 'text-center');
-
-        const challengeUserBtn = document.createElement('button');
-        challengeUserBtn.classList.add('btn', 'btn-info');
-        challengeUserBtn.innerText = 'Play';
-        challengeUserBtn.addEventListener('click', () => { askToPlay(user.userId); });
-
-        challengeUserData.appendChild(challengeUserBtn);
-        tableRow.appendChild(challengeUserData);
-      });
-
-      // 'offline users'
-      offlineUsers.forEach((user) => {
-        const tableRowOffline = document.createElement('tr');
-        offlineUsersContainer.appendChild(tableRowOffline);
-        tableRowOffline.innerHTML += `
-        <td class="user-table">${user.username}</td>
-        <td class="user-table">${user.userId}</td>
-        <td class="user-table"></td>
-        <td class="user-table">${user.lastActive}</td>
-        <td class="user-table"></td>
         `;
       });
     }).catch((e) => {

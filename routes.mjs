@@ -26,4 +26,5 @@ export default function bindRoutes(app) {
   app.post('/login', userController.login);
 
   app.get('/users', userController.userStatuses);
+  app.get('/openrooms', gameController.showOpen);
 }

@@ -1,6 +1,6 @@
-import sequelize from 'sequelize';
 import pkg from 'sequelize';
-import { flip } from '@popperjs/core';
+import moment from 'moment';
+
 import { checkError } from '../src/util.mjs';
 import * as gameLogic from '../src/game-logic.mjs';
 
@@ -69,7 +69,7 @@ export default function initGamesController(db) {
         opponentId = userId;
         break;
       case 'computer':
-        opponentId = null;
+        opponentId = 1;
         break;
       default:
         opponentId = request.body.opponentId;
@@ -126,7 +126,54 @@ export default function initGamesController(db) {
       res.status(500).send(error);
     }
   };
-  // const getCurrentTurn = async (gameId, )
+  const showOpen = async (req, res) => {
+    const min = -30;
+    const currentTime = new Date();
+    const cutOffTime = new Date(currentTime.getTime() + min * 60000);
+    try {
+      let openGames = await db.Game.findAll({
+        where: {
+          whiteId: null,
+          winnerId: null,
+        },
+        include: [{
+          model: db.User,
+          as: 'blackPlayer',
+          include: {
+            model: db.Status,
+          },
+
+          //   where: {
+          //     lastAction: {
+          //       [Op.gte]: cutOffTime,
+          //     },
+          //     inGame: false,
+          //   },
+          // }],
+        }],
+      });
+      // filter outside of sequelize :(
+      openGames = openGames.filter((game) => game.blackPlayer.user_status.lastAction > cutOffTime);
+      openGames = openGames.map((game) => (
+        {
+          gameId: game.id,
+          createdAt: moment(game.createdAt).fromNow(),
+          blackId: game.blackId,
+          blackUserName: game.blackPlayer.username,
+          blackInGame: game.blackPlayer.user_status.inGame,
+          whiteId: null,
+          winnerId: null,
+
+        }));
+      console.log('openGames :>> ', openGames);
+      res.send({ openGames });
+    } catch (error) {
+      console.log('error in showing open games');
+      checkError(error);
+      res.status(500).send(error);
+    }
+  };
+
   const createMove = async (req, res) => {
     // eslint-disable-next-line prefer-const
     let { rowIndex, colIndex, isBlackTurn } = req.body;
@@ -319,7 +366,6 @@ export default function initGamesController(db) {
     if (blackIsWinner !== null)
     {
       const game = await db.Game.findByPk(gameId);
-      console.log('game :>> ', game);
       const winnerId = blackIsWinner ? game.blackId : game.whiteId;
       if (winnerId !== null) {
         game.setWinner(winnerId);
@@ -333,6 +379,7 @@ export default function initGamesController(db) {
     index,
     show,
     showTurn,
+    showOpen,
     createMove,
     computerMove,
     setWinner,

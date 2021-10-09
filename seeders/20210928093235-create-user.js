@@ -13,7 +13,7 @@ function getHash(input) {
 
 module.exports = {
   up: async (queryInterface) => {
-    const users = ['otter', 'otterpus'];
+    const users = ['computer', 'otter', 'otterpus'];
     const userObjs = users.map((user) => ({
       username: user,
       email: `${user}@gmail.com`,
