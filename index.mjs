@@ -39,11 +39,15 @@ io.on('connection', (socket) => {
   socket.on('online-game', (msg) => {
     io.emit('online-game', msg);
   });
+  socket.on('reload-board', (msg) => {
+    console.log('reload-board msg :>> ', msg);
+    io.emit('reload-board', msg);
+  });
 });
 
 // Set Express to listen on the given port
 const PORT = process.env.PORT || 3004;
 // app.listen(PORT);
 server.listen(PORT, () => {
-  console.log(`listening on* :${PORT}`);
+  console.log(`listening on** :${PORT}`);
 });

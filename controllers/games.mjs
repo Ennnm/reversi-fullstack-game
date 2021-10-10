@@ -71,7 +71,8 @@ export default function initGamesController(db) {
         opponentId = 1;
         break;
       default:
-        opponentId = request.body.opponentId;
+        opponentId = null;
+        // opponentId = request.body.opponentId;
     }
     const blackId = playerIsBlack ? userId : opponentId;
     const whiteId = playerIsBlack ? opponentId : userId;
@@ -199,6 +200,8 @@ export default function initGamesController(db) {
     turnNum = parseInt(turnNum, 10);
 
     console.log('in createMove');
+    console.log('rowIndex, colIndex, isBlackTurn :>> ', rowIndex, colIndex, isBlackTurn);
+    console.log('gameId, turnNum :>> ', gameId, turnNum);
     try {
       const currGameTurn = await getCurrTurn(db, gameId, turnNum);
       const currentGame = await db.Game.findOne({
@@ -213,6 +216,7 @@ export default function initGamesController(db) {
 
       const validMove = gameLogic.moveIsValid(rowIndex, colIndex, currentValidMoves);
       const moveCode = gameLogic.moveCodeFromCoord([rowIndex, colIndex]);
+      console.log('currentValidMoves :>> ', currentValidMoves);
       // diff from computer player
       if (validMove === false) {
         res.send({ isValidMove: validMove });
