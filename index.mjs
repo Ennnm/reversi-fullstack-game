@@ -1,11 +1,14 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import methodOverride from 'method-override';
-
+import http from 'http';
+import { Server } from 'socket.io';
 import bindRoutes from './routes.mjs';
-
 // Initialise Express instance
 const app = express();
+
+const server = http.createServer(app);
+// const io = new Server(server);
 // Set the Express view engine to expect EJS templates
 app.set('view engine', 'ejs');
 // Bind cookie parser middleware to parse cookies in requests
@@ -20,13 +23,17 @@ app.use(methodOverride('_method'));
 app.use(express.static('public'));
 // Expose the files stored in the distribution folder
 app.use(express.static('dist'));
-
 // Bind route definitions to the Express application
 bindRoutes(app);
+
+// io.on('connection', (socket) => { console.log('a user connected', socket); });
 
 // Set Express to listen on the given port
 const PORT = process.env.PORT || 3004;
 app.listen(PORT);
+// server.listen(PORT, () => {
+//   console.log(`listening on* :${PORT}`);
+// });
 
 // const io = require('socket.io')(3000);
 

@@ -19,7 +19,7 @@ const modalContainer = document.querySelector('#modal-container');
 
 gameContainer.classList.add('relative');
 // game data
-let playerIsBlack;
+let playerIsBlack = true;
 let isBlackTurn = true;
 let gameId;
 let turnNum;
@@ -246,6 +246,9 @@ const computerMove = () => {
   }, 500);
 };
 const clickOnCell = (e) => {
+  if (playerIsBlack !== isBlackTurn && gameType !== 'local') {
+    return;
+  }
   const cell = e.target;
   const cellId = cell.id;
   const [rowIndex, colIndex] = cellId
@@ -404,6 +407,13 @@ const comOptionsModal = () => {
 
   innerStartBtn.addEventListener('click', initComGame);
 };
+const activateBoard = () => {
+  gameContainer.appendChild(initClickGrid());
+  const startGameBtn = document.getElementById('startGameBtn');
+  actionContainer.removeChild(startGameBtn);
+  console.log('activating the board');
+};
+
 const initOnlineGame = async () => {
   isBlackTurn = true;
   gameType = 'computer';
@@ -424,17 +434,16 @@ const initOnlineGame = async () => {
   // deactivate clicking board while waiting for opponent to arrive
   // when opponent joins and click 'startgame'
   // clicking board is activated
-  // game is started, black gets to click on the board
+  // game is started, black gets to click on the board <-press start, emit to other player that they can start playing
+
   // modal popout sent to black to tell them their game has started
-  // black can click on button to start game
+  // black can click on button to start game. if isBlackTurn and playerIsBlack
   // if click is valid, 'black moved' sent to white for white's board to update
   // vice versa
 };
-const activateBoard = () => {
-  gameContainer.appendChild(initClickGrid());
-  const startGameBtn = document.getElementById('startGameBtn');
-  actionContainer.removeChild(startGameBtn);
-  console.log('activating the board');
+
+const startRoomGame = () => {
+// how much info to store as cookies/params and how much as local variables
 };
 const joinRoom = (game) => {
   isBlackTurn = true;
@@ -464,7 +473,7 @@ const joinRoom = (game) => {
   startGameBtn.id = 'startGameBtn';
   startGameBtn.innerText = 'Start game';
   actionContainer.appendChild(startGameBtn);
-  startGameBtn.addEventListener('click', activateBoard);
+  startGameBtn.addEventListener('click', activateBoard); //= > activate board, send messages
 
   // '/games/:gameId'
   // render gameboard based on latest game turn
@@ -800,8 +809,6 @@ const findMatchModal = () => {
 };
 const multiplayerLocalGame = () => {
   console.log('in multiplayer local');
-  playerIsBlack = true;
-
   initGame('local');
 
   // black player
