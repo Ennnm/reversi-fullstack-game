@@ -8,7 +8,7 @@ import bindRoutes from './routes.mjs';
 const app = express();
 
 const server = http.createServer(app);
-// const io = new Server(server);
+const io = new Server(server);
 // Set the Express view engine to expect EJS templates
 app.set('view engine', 'ejs');
 // Bind cookie parser middleware to parse cookies in requests
@@ -26,17 +26,24 @@ app.use(express.static('dist'));
 // Bind route definitions to the Express application
 bindRoutes(app);
 
-// io.on('connection', (socket) => { console.log('a user connected', socket); });
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('disconnect', () => { console.log('user disconnected'); });
+  socket.on('online-game', (msg) => {
+    console.log(`room: ${msg.gameId} ${msg.whiteId}`);
+  });
+  socket.on('startpage', (msg) => {
+    io.emit('startpage', msg);
+    console.log('server can receive');
+  });
+  socket.on('online-game', (msg) => {
+    io.emit('online-game', msg);
+  });
+});
 
 // Set Express to listen on the given port
 const PORT = process.env.PORT || 3004;
-app.listen(PORT);
-// server.listen(PORT, () => {
-//   console.log(`listening on* :${PORT}`);
-// });
-
-// const io = require('socket.io')(3000);
-
-// io.on('connection', (socket) => {
-//   socket.emit('chat-message', 'hello world');
-// });
+// app.listen(PORT);
+server.listen(PORT, () => {
+  console.log(`listening on* :${PORT}`);
+});

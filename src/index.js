@@ -1,8 +1,18 @@
 import axios from 'axios';
 import { AsyncIterator } from 'regenerator-runtime/runtime';
-// import { createPopper } from '@popperjs/core';
 import { Modal } from 'bootstrap';
 import './styles.scss';
+import { io } from 'socket.io-client';
+
+const socket = io();
+
+socket.on('disconnect', (reason) => {
+  console.log(`disconnect due to ${reason}`);
+});
+socket.on('connect', (reason) => {
+  console.log(`connect due to ${reason}`);
+});
+socket.on('connect_error', (err) => { console.log(`connect_error due to ${err.message}`); });
 
 // const socket = io('http://localghost:3000');
 // socket.on('chat-message', (data) => {
@@ -27,6 +37,7 @@ let opponentId;
 let coordValidMoves;
 let gameType;
 let difficultyLvl;
+let userId;
 const gameEnded = false;
 const boardSize = 8;
 const GAMEHASENDED = 'Game has ended';
@@ -442,9 +453,32 @@ const initOnlineGame = async () => {
   // vice versa
 };
 
+socket.on('online-game', (msg) => {
+  console.log('received message to start', msg);
+  if (msg.whiteId !== userId) {
+    console.log('black :>> ', userId);
+
+    secInfoContainer.innerText = `Game ${msg.gameId} started with whiteId: ${msg.whiteId}, your/Black turn`;
+  }
+  else {
+    console.log('white, userId :>> ', userId);
+
+    secInfoContainer.innerText = 'Game has started, black goes first';
+  }
+  gameContainer.appendChild(initClickGrid());
+});
+
 const startRoomGame = () => {
 // how much info to store as cookies/params and how much as local variables
+// x has joined the room
+// send message to black
+  socket.emit('online-game', { gameId, whiteId: userId });
+  secInfoContainer.innerText = 'Game has started, black goes first';
+
+  activateBoard();
 };
+// we she me not working, rececing on server side
+
 const joinRoom = (game) => {
   isBlackTurn = true;
   playerIsBlack = false;
@@ -473,7 +507,7 @@ const joinRoom = (game) => {
   startGameBtn.id = 'startGameBtn';
   startGameBtn.innerText = 'Start game';
   actionContainer.appendChild(startGameBtn);
-  startGameBtn.addEventListener('click', activateBoard); //= > activate board, send messages
+  startGameBtn.addEventListener('click', startRoomGame); //= > activate board, send messages
 
   // '/games/:gameId'
   // render gameboard based on latest game turn
@@ -647,6 +681,7 @@ const submitSignUpForm = () => {
       if (response.data.error) {
         throw response.data.error;
       }
+      userId = response.data.userId;
     })
     .then(() => {
       removeModal();
@@ -676,6 +711,7 @@ const submitLoginForm = () => {
       if (response.data.error) {
         throw response.data.error;
       }
+      userId = response.data.userId;
     })
     .then(() => {
       removeModal();
@@ -764,6 +800,7 @@ const signUpModal = () => {
 };
 
 const startPage = () => {
+  socket.emit('startpage', 'starting');
   headerContainer.innerText = 'RiverSea';
   gameType = 'local';
   initGame(gameType);
