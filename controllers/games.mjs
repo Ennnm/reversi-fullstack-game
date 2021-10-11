@@ -216,7 +216,7 @@ export default function initGamesController(db) {
 
       const validMove = gameLogic.moveIsValid(rowIndex, colIndex, currentValidMoves);
       const moveCode = gameLogic.moveCodeFromCoord([rowIndex, colIndex]);
-      console.log('currentValidMoves   :>> ', currentValidMoves  );
+      console.log('currentValidMoves   :>> ', currentValidMoves);
       // diff from computer player
       if (validMove === false) {
         res.send({ isValidMove: validMove });
@@ -228,13 +228,6 @@ export default function initGamesController(db) {
       else {
         currGameTurn.whiteMove = moveCode;
         turnNum += 1;
-        // const newGameTurn = await db.Turn.create({
-        //   gameId,
-        //   turnNum,
-        //   gameState: {
-        //     ...currGameTurn.gameState,
-        //   },
-        // });
       }
       const updatedGameBoard = gameLogic.updateGameBoard(boardData, validMove, isBlackTurn);
 

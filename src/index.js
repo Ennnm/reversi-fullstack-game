@@ -67,6 +67,7 @@ const endGame = (numBlackSeeds, numWhiteSeeds) => {
     blackIsWinner = null;
   }
   statusContainer.innerText = endgameMesg;
+  secInfoContainer.innerText = '';
   // send back to server who is the winner
   mainPage();
   axios
@@ -304,8 +305,6 @@ const clickOnCell = (e) => {
         computerMove();
       }
       if (gameType === 'online') {
-        console.log('asking opponent to move');
-        // reload opponent's board
         socket.emit('reload-board', {
           isBlackTurn, gameState, validMoves, flippedSeeds, turnNum, gameId,
         });
@@ -393,8 +392,11 @@ const initComGame = async () => {
   removeModal();
   await initGame(gameType);
   // need to await initGame  or put the different status msg in init game
-  secInfoContainer.innerText = 'Starting game against computer. You/Black starts first';
+  secInfoContainer.innerText = 'Game started against computer. You/Black starts first';
   actionContainer.innerHTML = '';
+  actionContainer.appendChild(initLocalMultiplayerBtn());
+  actionContainer.appendChild(initFindMatchBtn());
+
   // init game
   // game board
   // fill info-container (who moves)
@@ -402,6 +404,21 @@ const initComGame = async () => {
   // expandable: previous moves, changes in seed numbers -> extract most impactful move
   // undo btn -> undo > 3 times: labelled as save scum, save boards of shame
   // surrender btn -> end game
+};
+const initLocalGame = () => {
+  isBlackTurn = true;
+  playerIsBlack = true;
+
+  console.log('in multiplayer local');
+  initGame('local');
+
+  secInfoContainer.innerText = 'Game started locally, black starts first';
+  actionContainer.innerHTML = '';
+  actionContainer.appendChild(initPlayAgstComBtn());
+  actionContainer.appendChild(initFindMatchBtn());
+
+  // black player
+  // white player
 };
 
 const comOptionsModal = () => {
@@ -463,6 +480,9 @@ const initOnlineGame = async () => {
   gameContainer.removeChild(clickGrid);
 
   secInfoContainer.innerText = ' Waiting for opponent to join.';
+  actionContainer.innerHTML = '';
+  actionContainer.appendChild(initLocalMultiplayerBtn());
+  actionContainer.appendChild(initPlayAgstComBtn());
   //   actionContainer.appendChild(playAgstComBtn);
   // // -> lead to page with all users where player can pick their opponent
   // actionContainer.appendChild(findMatchBtn);
@@ -536,12 +556,10 @@ const joinRoom = (game) => {
     }).catch((e) => {
       console.log('error with getting and rendering next turn', e);
     });
-  const startGameBtn = document.createElement('button');
-  startGameBtn.classList.add('btn', 'btn-info');
-  startGameBtn.id = 'startGameBtn';
-  startGameBtn.innerText = 'Start game';
-  actionContainer.appendChild(startGameBtn);
-  startGameBtn.addEventListener('click', startRoomGame); //= > activate board, send messages
+  actionContainer.innerHTML = '';
+  actionContainer.appendChild(initLocalMultiplayerBtn());
+  actionContainer.appendChild(initPlayAgstComBtn());
+  actionContainer.appendChild(initStartMultiplayerBtn());
 
   // '/games/:gameId'
   // render gameboard based on latest game turn
@@ -663,15 +681,17 @@ const usersModal = () => {
       console.log('error in getting online players', e);
     });
 };
-
-const mainPage = () => {
-  // fill header
-  // render tip board/reversi puzzle (level? random warm up board? board of the great)
-  // against ai, local multiplayer, find match btn
-  actionContainer.innerHTML = '';
-
+const initStartMultiplayerBtn = () => {
+  const startGameBtn = document.createElement('button');
+  startGameBtn.classList.add('btn', 'btn-info', 'm-1');
+  startGameBtn.id = 'startGameBtn';
+  startGameBtn.innerText = 'Start game';
+  startGameBtn.addEventListener('click', startRoomGame); //= > activate board, send messages
+  return startGameBtn;
+};
+const initPlayAgstComBtn = () => {
   const playAgstComBtn = document.createElement('button');
-  playAgstComBtn.classList.add('btn', 'btn-light');
+  playAgstComBtn.classList.add('btn', 'btn-light', 'm-1');
   playAgstComBtn.innerText = 'Play against computer';
 
   playAgstComBtn.addEventListener('click', () => {
@@ -679,20 +699,40 @@ const mainPage = () => {
     const optionM = new Modal(document.getElementById('optionsModal'));
     optionM.toggle();
   });
+  return playAgstComBtn;
+};
 
+const initFindMatchBtn = () => {
   const findMatchBtn = document.createElement('button');
-  findMatchBtn.classList.add('btn', 'btn-info');
+  findMatchBtn.classList.add('btn', 'btn-info', 'm-1');
   findMatchBtn.innerText = 'Fight otters';
-
   findMatchBtn.addEventListener('click', () => {
     usersModal();
     const userM = new Modal(document.getElementById('usersModal'));
     userM.toggle();
   });
+  return findMatchBtn;
+};
 
-  actionContainer.appendChild(playAgstComBtn);
+const initLocalMultiplayerBtn = () => {
+  const playLocalBtn = document.createElement('button');
+
+  playLocalBtn.classList.add('btn', 'btn-light', 'm-1');
+  playLocalBtn.innerText = 'Play locally';
+
+  playLocalBtn.addEventListener('click', initLocalGame);
+  return playLocalBtn;
+};
+const mainPage = () => {
+  // fill header
+  // render tip board/reversi puzzle (level? random warm up board? board of the great)
+  // against ai, local multiplayer, find match btn
+  actionContainer.innerHTML = '';
+
+  actionContainer.appendChild(initLocalMultiplayerBtn());
+  actionContainer.appendChild(initPlayAgstComBtn());
   // -> lead to page with all users where player can pick their opponent
-  actionContainer.appendChild(findMatchBtn);
+  actionContainer.appendChild(initFindMatchBtn());
 };
 
 const submitSignUpForm = () => {
@@ -841,11 +881,11 @@ const startPage = () => {
 
   modalContainer.innerHTML = '';
   const loginBtn = document.createElement('button');
-  loginBtn.classList.add('btn', 'btn-info');
+  loginBtn.classList.add('btn', 'btn-info', 'm-1');
   loginBtn.innerText = 'Login';
 
   const signupBtn = document.createElement('button');
-  signupBtn.classList.add('btn', 'btn-light');
+  signupBtn.classList.add('btn', 'btn-light', 'm-1');
   signupBtn.innerText = 'Sign up';
 
   actionContainer.appendChild(signupBtn);
@@ -867,34 +907,7 @@ const startPage = () => {
   });
 };
 
-const animateBetweenTurns = () => {
-  // after black moves, after white moves
-  // to show seed changes at significant turns
-};
-
-const findMatchModal = () => {
-  // finding match .... ellipses
-  // match found -> from logged in users
-  // show user details ( username, wins, losses, rank?)
-  // find another, play btn
-};
-const multiplayerLocalGame = () => {
-  console.log('in multiplayer local');
-  initGame('local');
-
-  // black player
-  // white player
-};
-const multiplayerOnlineGame = () => {
-  // connection by sockets?
-};
-const users = () => {
-  // show online and offline players
-  // rank, status
-};
 const map = () => {
   // plan attack
 };
 startPage();
-// loginModal();
-// multiplayerLocalGame();
