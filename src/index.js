@@ -154,7 +154,6 @@ const initFlippedGrid = () => {
   }
   return table;
 };
-
 const removeElemById = (id, container) => {
   const element = document.querySelector(`#${id}`);
   if (element !== null) {
@@ -167,7 +166,7 @@ const renderBoard = (boardData) => {
   removeElemById('seedGrid', gameContainer);
   // gameContainer.appendChild(initBoardElem());
   gameContainer.appendChild(initSeedElem());
-  console.log('boardData :>> ', boardData);
+  console.log('reloading board');
   // run through board data, fill board
   for (let i = 0; i < boardData.length; i += 1) {
     const refRow = boardData[i];
@@ -304,7 +303,7 @@ const clickOnCell = (e) => {
         console.log('asking computer to move');
         computerMove();
       }
-      if (gameType === 'online' && prevTurn !== isBlackTurn && gameState.gameStatus !== GAMEHASENDED) {
+      if (gameType === 'online') {
         console.log('asking opponent to move');
         // reload opponent's board
         socket.emit('reload-board', {
@@ -320,15 +319,14 @@ socket.on('reload-board', (board) => {
   gameId = board.gameId;
   console.log('reloading board :>> ', board);
   console.log('playerIsBlack :>> ', playerIsBlack);
+  console.log('turnNum :>> ', turnNum);
+  console.log('gameId :>> ', gameId);
 
-  if (playerIsBlack === isBlackTurn) {
-    const { gameState, validMoves, flippedSeeds } = board;
-    renderGameState(gameState);
-    flippedSeedsGrid(flippedSeeds, isBlackTurn);
+  const { gameState, validMoves, flippedSeeds } = board;
+  renderGameState(gameState);
+  flippedSeedsGrid(flippedSeeds, isBlackTurn);
 
-    coordValidMoves = gameState.validMoves.map((move) => move.coord);
-  }
-  // TODO figure out why gameId and turnNum are lost between turns => perhaps reason why no valid moves available
+  coordValidMoves = validMoves.map((move) => move.coord);
 });
 
 const initClickGrid = () => {
@@ -482,15 +480,16 @@ const initOnlineGame = async () => {
 
 socket.on('online-game', (msg) => {
   console.log('received message to start', msg);
+  console.log('userId :>> ', userId);
   if (msg.whiteId !== userId) {
     console.log('black :>> ', userId);
 
-    secInfoContainer.innerText = `Game ${msg.gameId} started with whiteId: ${msg.whiteId}, your/Black turn`;
+    secInfoContainer.innerText = 'Game started, your play black';
   }
   else {
     console.log('white, userId :>> ', userId);
 
-    secInfoContainer.innerText = 'Game has started, black goes first';
+    secInfoContainer.innerText = 'Game started, your play white';
     // After black clicks, get both servers to refresh board from database according to latest turns, emit that its white turn aka isBlackTurn=false
     // Disable black click board
     // enable white click board
@@ -505,16 +504,18 @@ const startRoomGame = () => {
 // send message to black
   gameType = 'online';
   socket.emit('online-game', { gameId, whiteId: userId });
+
   secInfoContainer.innerText = 'Game has started, black goes first';
 
   activateBoard();
 };
-// we she me not working, rececing on server side
 
 const joinRoom = (game) => {
   isBlackTurn = true;
   playerIsBlack = false;
   gameType = 'online';
+  coordValidMoves = [];
+  removeElemById('flipGrid', gameContainer);
   removeModal();
   console.log('game :>> ', game);
   // update opponent name in database for game

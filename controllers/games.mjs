@@ -216,7 +216,7 @@ export default function initGamesController(db) {
 
       const validMove = gameLogic.moveIsValid(rowIndex, colIndex, currentValidMoves);
       const moveCode = gameLogic.moveCodeFromCoord([rowIndex, colIndex]);
-      console.log('currentValidMoves :>> ', currentValidMoves);
+      console.log('currentValidMoves   :>> ', currentValidMoves  );
       // diff from computer player
       if (validMove === false) {
         res.send({ isValidMove: validMove });
