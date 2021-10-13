@@ -151,6 +151,7 @@ module.exports = {
       },
       in_game: {
         type: Sequelize.BOOLEAN,
+        default: false,
       },
       last_action: {
         type: Sequelize.DATE,

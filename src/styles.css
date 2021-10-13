@@ -1,0 +1,116 @@
+body {
+  background-color: #d7f2fa;
+  font-family: "Recursive", sans-serif;
+}
+
+td {
+  width: 2em;
+  height: 2em;
+  border: solid 2px transparent;
+}
+
+.user-table {
+  border: solid 0px transparent;
+}
+
+table {
+  z-index: 0;
+  width: 100%;
+  position: relative;
+}
+
+.modal-body-users {
+  height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-dialog {
+  overflow-y: initial !important;
+}
+
+#header-container {
+  font-family: "Recursive", sans-serif;
+  font-size: 3.5em;
+}
+
+.relative {
+  position: relative;
+}
+
+.board-colors {
+  background-color: #2e8b57;
+  border: solid 2px #2b2b2b;
+}
+
+.highlight-cell {
+  background-color: aqua;
+  opacity: 0.8;
+}
+
+.highlight-cell-black {
+  background-color: #6c3c8c;
+  opacity: 0.8;
+}
+
+.highlight-cell-white {
+  background-color: #8c6520;
+  opacity: 0.8;
+}
+
+.highlight-new-seeds {
+  background-color: #ffffff;
+  opacity: 0.4;
+}
+
+.potential-moves-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.seed-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  position: absolute;
+  z-index: 2;
+}
+
+.click-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+.seed {
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  border: 2px solid black;
+  background-color: black;
+  -webkit-box-shadow: 3px 5px 3px -3px black;
+          box-shadow: 3px 5px 3px -3px black;
+  margin: auto auto;
+}
+
+.white {
+  background-color: white;
+}
+
+@media (min-width: 767px) {
+  td {
+    width: 5em;
+    height: 5em;
+    border: solid 4px #2b2b2b;
+  }
+  .seed {
+    width: 4em;
+    height: 4em;
+  }
+  #header-container {
+    font-size: 8.75em;
+  }
+}
+/*# sourceMappingURL=styles.css.map */

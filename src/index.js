@@ -14,11 +14,6 @@ socket.on('connect', (reason) => {
 });
 socket.on('connect_error', (err) => { console.log(`connect_error due to ${err.message}`); });
 
-// const socket = io('http://localghost:3000');
-// socket.on('chat-message', (data) => {
-//   console.log(data);
-// });
-// checkLoggedIn();
 const headerContainer = document.querySelector('#header-container');
 const gameContainer = document.querySelector('#game-container');
 const infoContainer = document.querySelector('#info-container');
@@ -81,7 +76,6 @@ const renderGameStatusInfo = (gameStatus, numBlackSeeds, numWhiteSeeds) => {
   if (gameStatus === GAMEHASENDED) {
     endGame(numBlackSeeds, numWhiteSeeds);
   } else {
-    // problem when gameStatus is undefined
     statusContainer.innerText = gameStatus;
   }
 };
@@ -103,7 +97,6 @@ const initBoardElem = () => {
     for (let j = 0; j < boardSize; j += 1) {
       const boardCell = boardRow.insertCell();
       boardCell.classList.add('board-colors');
-      // follow convention A1... where A is column, 1 is row
       boardCell.id = `square_${i}_${j}`;
     }
   }
@@ -119,7 +112,6 @@ const initSeedElem = () => {
     boardRow.id = `row_${i}`;
     for (let j = 0; j < boardSize; j += 1) {
       const boardCell = boardRow.insertCell();
-      // follow convention A1... where A is column, 1 is row
       boardCell.id = `seed_${i}_${j}`;
     }
   }
@@ -134,7 +126,6 @@ const initMovesGrid = () => {
     const boardRow = table.insertRow();
     for (let j = 0; j < boardSize; j += 1) {
       const boardCell = boardRow.insertCell();
-      // follow convention A1... where A is column, 1 is row
       boardCell.id = `move_${i}_${j}`;
     }
   }
@@ -149,8 +140,21 @@ const initFlippedGrid = () => {
     const boardRow = table.insertRow();
     for (let j = 0; j < boardSize; j += 1) {
       const boardCell = boardRow.insertCell();
-      // follow convention A1... where A is column, 1 is row
       boardCell.id = `flip_${i}_${j}`;
+    }
+  }
+  return table;
+};
+const initClickGrid = () => {
+  const table = document.createElement('table');
+  table.id = 'click-grid';
+  table.classList.add('click-grid');
+  for (let i = 0; i < boardSize; i += 1) {
+    const boardRow = table.insertRow();
+    for (let j = 0; j < boardSize; j += 1) {
+      const boardCell = boardRow.insertCell();
+      boardCell.id = `click_${i}_${j}`;
+      boardCell.addEventListener('click', clickOnCell);
     }
   }
   return table;
@@ -163,9 +167,7 @@ const removeElemById = (id, container) => {
 };
 const renderBoard = (boardData) => {
   // re-renders board
-  // removeElemById("boardGrid", gameContainer);
   removeElemById('seedGrid', gameContainer);
-  // gameContainer.appendChild(initBoardElem());
   gameContainer.appendChild(initSeedElem());
   console.log('reloading board');
   // run through board data, fill board
@@ -304,6 +306,7 @@ const clickOnCell = (e) => {
         console.log('asking computer to move');
         computerMove();
       }
+
       if (gameType === 'online') {
         socket.emit('reload-board', {
           isBlackTurn, gameState, validMoves, flippedSeeds, turnNum, gameId,
@@ -327,22 +330,6 @@ socket.on('reload-board', (board) => {
 
   coordValidMoves = validMoves.map((move) => move.coord);
 });
-
-const initClickGrid = () => {
-  const table = document.createElement('table');
-  table.id = 'click-grid';
-  table.classList.add('click-grid');
-  for (let i = 0; i < boardSize; i += 1) {
-    const boardRow = table.insertRow();
-    for (let j = 0; j < boardSize; j += 1) {
-      const boardCell = boardRow.insertCell();
-      // follow convention A1... where A is column, 1 is row
-      boardCell.id = `click_${i}_${j}`;
-      boardCell.addEventListener('click', clickOnCell);
-    }
-  }
-  return table;
-};
 
 const initGame = async (gameType, opponentId = null) => {
   // booleanArray true: black, false: white, undefined/null: empty
@@ -504,12 +491,12 @@ socket.on('online-game', (msg) => {
   if (msg.whiteId !== userId) {
     console.log('black :>> ', userId);
 
-    secInfoContainer.innerText = 'Game started, your play black';
+    secInfoContainer.innerText = 'Game started, you play black';
   }
   else {
     console.log('white, userId :>> ', userId);
 
-    secInfoContainer.innerText = 'Game started, your play white';
+    secInfoContainer.innerText = 'Game started, you play white';
     // After black clicks, get both servers to refresh board from database according to latest turns, emit that its white turn aka isBlackTurn=false
     // Disable black click board
     // enable white click board

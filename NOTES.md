@@ -24,3 +24,21 @@ https://socket.io/docs/v3/rooms/
 https://gist.github.com/crtr0/2896891
 
 socket? rooms
+
+
+
+electron js
+
+seo
+
+server-side rendering (ejs)
+
+client-side rendering (html)
+
+next.js
+
+nuxt.js
+
+lodash library
+
+immediate invoked function expressions

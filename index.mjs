@@ -24,6 +24,7 @@ app.use(express.static('public'));
 // Expose the files stored in the distribution folder
 app.use(express.static('dist'));
 // Bind route definitions to the Express application
+// put io inside and access with controllers
 bindRoutes(app);
 
 io.on('connection', (socket) => {

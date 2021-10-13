@@ -159,17 +159,18 @@ export default function initGamesController(db) {
           as: 'blackPlayer',
           include: {
             model: db.Status,
-          },
 
-          //   where: {
-          //     lastAction: {
-          //       [Op.gte]: cutOffTime,
-          //     },
-          //     inGame: false,
-          //   },
+            where: {
+              lastAction: {
+                [Op.gte]: cutOffTime,
+              },
+              inGame: false,
+            },
+          },
           // }],
         }],
       });
+      console.log('openGames test :>> ', openGames[0].blackPlayer.username);
       // filter outside of sequelize :(
       openGames = openGames.filter((game) => game.blackPlayer.user_status.lastAction > cutOffTime);
       openGames = openGames.map((game) => (
@@ -268,7 +269,7 @@ export default function initGamesController(db) {
       console.log('currentGame :>> ', currentGame);
       await currGameTurn.save({ fields: ['whiteMove', 'blackMove', 'gameState'] });
       await currGameTurn.reload();
-
+      // socket.emit
       res.send({
         turnNum,
         isBlackTurn,

@@ -13,5 +13,8 @@
   "editor.wordWrap": "on",
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
-  "eslint.migration.2_x": "off"
+  "eslint.migration.2_x": "off",
+  "[sql]": {
+    "editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+  }
 }
