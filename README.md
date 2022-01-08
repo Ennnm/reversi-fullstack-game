@@ -8,11 +8,9 @@
 
 ## About The Project
 
-##### Video demo
-
 ![front page screenshot](/images/front-page-ss.jpg)
 
- https://youtu.be/ujEYyr_6Rtw
+[ Video demo](https://youtu.be/ujEYyr_6Rtw)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
