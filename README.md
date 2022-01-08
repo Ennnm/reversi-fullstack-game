@@ -10,6 +10,8 @@
 
 ##### Video demo
 
+![front page screenshot](/images/front-page-ss.jpg)
+
  https://youtu.be/ujEYyr_6Rtw
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -33,11 +35,9 @@
 
 - [Bootstrap](https://getbootstrap.com/)
 
-##### Planning TODO: CHECK FOR DOC, ADD sketeches, ERD, figma
+##### Planning
 
 - [notion](https://www.notion.so/RiverSea-ad2a486ccac7481d944dbc45f038562e)
-
-
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
