@@ -27,7 +27,7 @@
 
 ##### Bidirectional communication for multiplayer mode
 
-- [Socket.IO](https://firebase.google.com/docs/functions)
+- [Socket.IO](https://socket.io/)
 
 ##### Styling
 
