@@ -12,6 +12,8 @@
 
 [ Video demo](https://youtu.be/ujEYyr_6Rtw)
 
+You can find the deployed app [here](https://stormy-cove-58676.herokuapp.com/).
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Built With
